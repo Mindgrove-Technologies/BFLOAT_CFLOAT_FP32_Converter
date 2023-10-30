@@ -8,19 +8,19 @@ package fp32_cfloat143;
 import fp32_cfloat8_types::*;
 
 interface Ifc_fpu_convert_fp32_cfloat8_143;
-    method ActionValue#(CFLOAT143) convert_fp32_cfloat8;
-    method ActionValue#(FP32) convert_cfloat8_fp32;
+    method ActionValue#(CFLOAT143_t) convert_fp32_cfloat143;
+    method ActionValue#(FP32_t) convert_cfloat143_fp32;
 endinterface: Ifc_fpu_convert_fp32_cfloat8_143
 
 module fp32_to_cfloat143(Ifc_fpu_convert_fp32_cfloat8_143);
 
-    Reg#(FP32) rg_fp32 <- mkReg(FP32{
+    Reg#(FP32_t) rg_fp32 <- mkReg(FP32_t {
         sign : 0,
         exponent : 0,
         mantissa : 'h0
     });
 
-    Reg#(CFLOAT143) rg_cfloat143 <-mkReg(CFLOAT143{
+    Reg#(CFLOAT143_t) rg_cfloat143 <-mkReg(CFLOAT143_t {
         sign : 0,
         exponent : 0,
         mantissa : 'h0
