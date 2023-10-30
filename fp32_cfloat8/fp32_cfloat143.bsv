@@ -12,12 +12,14 @@ import fp32_cfloat8_types::*;
 
 (*always_ready, always_enabled*)
 interface Ifc_fpu_convert_fp32_cfloat143;
-    method ActionValue#(CFLOAT143_t) convert_fp32_cfloat143(FP32_t fp32_in, Bit#(6) bias);
+    method Action convert_fp32_cfloat143(FP32_t fp32_in, Bit#(6) bias);
+    method ActionValue#(CFLOAT143_t) get_cfloat143();
 endinterface: Ifc_fpu_convert_fp32_cfloat143
 
 (*always_ready, always_enabled*)
 interface Ifc_fpu_convert_cfloat143_fp32;
-    method ActionValue#(FP32_t) convert_cfloat143_fp32(CFLOAT143_t cfloat143_in, Bit#(6) bias);
+    method Action convert_cfloat143_fp32(CFLOAT143_t cfloat143_in, Bit#(6) bias);
+    method ActionValue#(FP32_t) get_fp32();
 endinterface: Ifc_fpu_convert_cfloat143_fp32
 
 // Module to convert IEEE-754 FP32 to Tesla's CFLOAT8_143.
@@ -36,6 +38,18 @@ module fp32_to_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
         mantissa : 'h0
     });
 
+    interface Ifc_fpu_convert_fp32_cfloat143 put_input;
+        method Action convert_fp32_cfloat143(FP32_t fp32_in, Bit#(6) bias);
+            rg_fp32 <= fp32_in;
+        endmethod
+    endinterface
+
+    interface Ifc_fpu_convert_fp32_cfloat143 get_response;
+        method ActionValue#(CFLOAT143_t) get_cfloat143();
+            return rg_cfloat143;
+        endmethod
+    endinterface
+
 endmodule: fp32_to_cfloat143
 
 // Module to convert Tesla's CFLOAT8_143 to IEEE-754 FP32.
@@ -53,6 +67,18 @@ module cfloat143_to_fp32(Ifc_fpu_convert_cfloat143_fp32);
         exponent : 0,
         mantissa : 'h0
     });
+
+    interface Ifc_fpu_convert_cfloat143_fp32 put_input;
+        method Action convert_cfloat143_fp32(CFLOAT143_t cfloat143_in, Bit#(6) bias);
+            rg_cfloat143 <= cfloat143_in;
+        endmethod
+    endinterface
+
+    interface Ifc_fpu_convert_cfloat143_fp32 get_response;
+        method ActionValue#(FP32_t) get_fp32();
+            return rg_fp32;
+        endmethod
+    endinterface
 
 endmodule: cfloat143_to_fp32
 
