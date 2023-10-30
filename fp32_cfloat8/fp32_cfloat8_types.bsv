@@ -13,12 +13,14 @@ typedef struct{
    Bit#(23) mantissa;
 }FP32 deriving(Bits,Eq,Fshow);
 
+// Struct for cfloat8_152 format
 typedef struct{
    Bit#(1) sign;
    Bit#(5) exponent;
    Bit#(2) mantissa;
 }CFLOAT152 deriving(Bits,Eq,Fshow);
 
+// Struct for cfloat8_143 format
 typedef struct{
    Bit#(1) sign;
    Bit#(4) exponent;
