@@ -10,9 +10,9 @@ import fp32_cfloat8_types::*;
 interface Ifc_fpu_convert_fp32_cfloat8_143;
     method ActionValue#(CFLOAT143) convert_fp32_cfloat8;
     method ActionValue#(FP32) convert_cfloat8_fp32;
-endinterface
+endinterface: Ifc_fpu_convert_fp32_cfloat8_143
 
-module fp32_to_cfloat143(Empty);
+module fp32_to_cfloat143(Ifc_fpu_convert_fp32_cfloat8_143);
 
     Reg#(FP32) rg_fp32 <- mkReg(FP32{
         sign : 0,
