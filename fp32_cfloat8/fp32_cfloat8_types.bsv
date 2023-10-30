@@ -11,19 +11,19 @@ typedef struct{
    Bit#(1) sign;
    Bit#(8) exponent;
    Bit#(23) mantissa;
-}FP32 deriving(Bits,Eq,Fshow);
+}FP32_t deriving(Bits,Eq,Fshow);
 
 typedef struct{
    Bit#(1) sign;
    Bit#(5) exponent;
    Bit#(2) mantissa;
-}CFLOAT152 deriving(Bits,Eq,Fshow);
+}CFLOAT152_t deriving(Bits,Eq,Fshow);
 
 typedef struct{
    Bit#(1) sign;
    Bit#(4) exponent;
    Bit#(3) mantissa;
-}CFLOAT143 deriving(Bits,Eq,Fshow);
+}CFLOAT143_t deriving(Bits,Eq,Fshow);
 
 
 endpackage: fp32_cfloat8_types
