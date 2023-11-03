@@ -7,23 +7,30 @@ package Testbench;
 
 // ================================================================
 // Project imports
+
 import fp32_cfloat8_types ::*;
-import fp32_cfloat152 ::*;
+import fp32_cfloat143 ::*;
 
 // ================================================================
 
+interface Ifc_Testbench;
+  
+endinterface
+
+// (* synthesize *)
+// module mkTestbench (Ifc_Testbench);
+
 (* synthesize *)
 module mkTestbench (Empty);
-  Ifc_fp32_cfloat152 mod <- mk_fp32_cfloat152;
-  
-  rule rl_sample;
-    // mod.fp32_in(FP32_t {sign: 1'b0,
-    //                     exponent: 8'h5,
-    //                     mantissa: 23'h0A});
-    mod.fp32_in(unpack(32'h251));
+    Ifc_fpu_convert_fp32_cfloat143 mod <- mk_fp32_cfloat143;
     
-  endrule
+    Bit#(6) bias = 6'b000011;
 
+    rule rl_sample;
+      mod.convert_fp32_cfloat143(FP32_t {sign: 1'b0,
+                          exponent: 8'h5,
+                          mantissa: 23'h0A}, bias);
+    endrule
    
 endmodule
 
