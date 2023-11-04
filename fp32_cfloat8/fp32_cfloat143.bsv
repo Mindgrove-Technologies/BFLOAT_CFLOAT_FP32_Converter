@@ -8,8 +8,10 @@ package fp32_cfloat143;
 // Project Imports
 import fp32_cfloat8_types::*;
 
-// Interface Declarations
+// Defines
+// `define verbose
 
+// Interface Declarations
 (*always_ready, always_enabled*)
 interface Ifc_fpu_convert_fp32_cfloat143;
     method Action convert_fp32_cfloat143(FP32_t fp32_in, Bit#(6) bias);
@@ -52,20 +54,37 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
     rule rl_convert_fp32_cfloat8;
 
         /* doc: local: cfloat sign,exponent & mantissa local variables */
-        Bit#(1)  lv_sign;
-        Bit#(4)  lv_exponent;
-        Bit#(3)  lv_mantissa;
+        CFLOAT143_t cfloat143 = CFLOAT143_t { sign: 0, exponent: 0, mantissa: 0 };
 
         Bit#(8) exponent_overflow_limit = ((rg_bias <= 6'd15) ? (8'd127 + zeroExtend(6'd15 - rg_bias)) : (8'd127 - zeroExtend(rg_bias - 6'd15)));
-        $display("Exponent Overflow Limit: %d", exponent_overflow_limit);
+        
+        `ifdef verbose
+            $display("Exponent Overflow Limit: %d", exponent_overflow_limit);
+        `endif
 
         rg_flags <= FLAGS_t {   zero     : pack((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)),
                                 invalid  : pack((&rg_fp32.exponent == 1'b1)),
-                                denormal : pack((&rg_fp32.exponent == 1'b0) && ((rg_fp32.mantissa[22] == 1'b0))),
-                                overflow : pack((rg_fp32.exponent > pack(exponent_overflow_limit)) && (rg_fp32.mantissa[22:19] == 4'b1111))
+                                // denormal : pack((&rg_fp32.exponent == 1'b0) && ((rg_fp32.mantissa[22] == 1'b0))),
+                                overflow : pack((rg_fp32.exponent > exponent_overflow_limit) && (rg_fp32.mantissa[22:20] == 3'b111))
                                 };
 
-        // rg_cfloat143 <= CFLOAT143_t{sign: lv_sign, exponent: lv_exponent, mantissa: lv_mantissa};
+        if(rg_flags.zero == 1)
+        begin
+            cfloat143.sign     = rg_fp32.sign;
+            cfloat143.exponent = 4'b0;
+            cfloat143.mantissa = 3'b0;
+        end
+        else if((rg_flags.invalid == 1) || (rg_flags.overflow == 1))
+        begin
+            cfloat143.sign     = rg_fp32.sign;
+            cfloat143.exponent = 4'b1111;
+            cfloat143.mantissa = 3'b111;
+        end
+
+        rg_cfloat143 <= CFLOAT143_t{  sign: cfloat143.sign,
+                                      exponent: cfloat143.exponent,
+                                      mantissa: cfloat143.mantissa
+                                   };
     
     endrule: rl_convert_fp32_cfloat8
 

@@ -19,16 +19,23 @@ endinterface
 
 (* synthesize *)
 module mkTestbench (Ifc_Testbench);
-    Ifc_fpu_convert_fp32_cfloat143 mod <- mk_fp32_cfloat143;
+    Ifc_fpu_convert_fp32_cfloat143 cfloat8_143_test <- mk_fp32_cfloat143;
     
-    Bit#(6) bias = 6'b011111;
+    Bit#(6) bias = 6'b001111;
 
-    rule rl_sample;
-      mod.convert_fp32_cfloat143(FP32_t {sign: 1'b1,
-                          exponent: 8'h5,
-                          mantissa: 23'h0A}, bias);
+    rule rl_convert;
+
+      cfloat8_143_test.convert_fp32_cfloat143(FP32_t {sign: 1'b0,
+                          exponent: 8'b11110000,
+                          mantissa: 23'b11111111111111111111111}, bias);
     endrule
-   
+
+    rule rl_get_result;
+
+      let result = cfloat8_143_test.get_cfloat143();
+      $display("Result: %8b", result);
+    endrule
+  
 endmodule
 
 // ================================================================
