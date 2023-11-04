@@ -17,17 +17,14 @@ interface Ifc_Testbench;
   
 endinterface
 
-// (* synthesize *)
-// module mkTestbench (Ifc_Testbench);
-
 (* synthesize *)
-module mkTestbench (Empty);
+module mkTestbench (Ifc_Testbench);
     Ifc_fpu_convert_fp32_cfloat143 mod <- mk_fp32_cfloat143;
     
-    Bit#(6) bias = 6'b000011;
+    Bit#(6) bias = 6'b011111;
 
     rule rl_sample;
-      mod.convert_fp32_cfloat143(FP32_t {sign: 1'b0,
+      mod.convert_fp32_cfloat143(FP32_t {sign: 1'b1,
                           exponent: 8'h5,
                           mantissa: 23'h0A}, bias);
     endrule

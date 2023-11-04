@@ -27,12 +27,12 @@ typedef struct{
   Bit#(3) mantissa;
 }CFLOAT143_t deriving(Bits,Eq);
 
-typdef stuct{
-  Bit#(1) zero,
-  Bit#(1) invalid,
-  Bit#(1) denormal,
-  Bit#(1) overflow,
-  Bit#(1) underflow
+typedef struct{
+  Bit#(1) zero;
+  Bit#(1) invalid;
+  Bit#(1) denormal;
+  Bit#(1) overflow;
+  Bit#(1) underflow;
 }FLAGS_t deriving(Bits,Eq);
 
 
