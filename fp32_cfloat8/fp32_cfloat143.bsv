@@ -68,6 +68,9 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
                                 overflow : pack((rg_fp32.exponent > exponent_overflow_limit) && (rg_fp32.mantissa[22:20] == 3'b111))
                                 };
 
+        // $display(" The exponent is: %d", rg_fp32.exponent);
+        // $display(" The exponent range is: %d %d", -(rg_bias - 1), (15-rg_bias));
+
         if(rg_flags.zero == 1)
         begin
             cfloat143.sign     = rg_fp32.sign;
@@ -79,6 +82,18 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
             cfloat143.sign     = rg_fp32.sign;
             cfloat143.exponent = 4'b1111;
             cfloat143.mantissa = 3'b111;
+        end
+        else  // Normal Case
+        begin
+            cfloat143.sign = rg_fp32.sign;  // Sign is returned as it is.
+            if ((rg_fp32.exponent >= signExtend(1 - rg_bias)) || (rg_fp32.exponent <= signExtend(15 - rg_bias))) // If exponent>= 1-bias and exponent<=15-bias, then the exponent is in range, and returned.
+            begin
+                $display(" The exponent is: %d", rg_fp32.exponent);
+                Integer exp = unpack(rg_fp32.exponent);
+                cfloat143.exponent = pack(valueOf(exp));
+            end
+            // Round to nearest positive with 3 bit mantissa.
+            cfloat143.mantissa = rg_fp32.mantissa[22:20];
         end
 
         rg_cfloat143 <= CFLOAT143_t{  sign: cfloat143.sign,
