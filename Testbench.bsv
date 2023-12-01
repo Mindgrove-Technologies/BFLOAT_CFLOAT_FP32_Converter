@@ -21,19 +21,19 @@ endinterface
 module mkTestbench (Ifc_Testbench);
     Ifc_fpu_convert_fp32_cfloat143 cfloat8_143_test <- mk_fp32_cfloat143;
     
-    Bit#(6) bias = 6'b001111;
+    Bit#(6) bias = 6'b000100;
 
     rule rl_convert;
 
       cfloat8_143_test.convert_fp32_cfloat143(FP32_t {sign: 1'b0,
-                          exponent: 8'b11110000,
-                          mantissa: 23'b11111111111111111111111}, bias);
+                          exponent: 8'b00000111,
+                          mantissa: 23'b11100000000000000011111}, bias);
     endrule
 
     rule rl_get_result;
 
       let result = cfloat8_143_test.get_cfloat143();
-      $display("Result: %8b", result);
+      // $display("Result: %8b", result);
     endrule
   
 endmodule
