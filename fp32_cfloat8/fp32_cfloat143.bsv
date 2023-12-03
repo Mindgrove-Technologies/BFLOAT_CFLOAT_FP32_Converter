@@ -62,39 +62,131 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
             $display("Exponent Overflow Limit: %d", exponent_overflow_limit);
         `endif
 
-        rg_flags <= FLAGS_t {   zero     : pack((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)),
-                                invalid  : pack((&rg_fp32.exponent == 1'b1)),
-                                // denormal : pack((&rg_fp32.exponent == 1'b0) && ((rg_fp32.mantissa[22] == 1'b0))),
-                                overflow : pack((rg_fp32.exponent > exponent_overflow_limit) && (rg_fp32.mantissa[22:20] == 3'b111))
-                                };
+        Bit#(8) exponent_underflow_limit = (8'd128 - zeroExtend(rg_bias));
 
-        // $display(" The exponent is: %d", rg_fp32.exponent);
-        // $display(" The exponent range is: %d %d", -(rg_bias - 1), (15-rg_bias));
+        `ifdef verbose
+            $display("Exponent Underflow Limit: %d", exponent_underflow_limit);
+        `endif
 
-        if(rg_flags.zero == 1)
+        FLAGS_t lv_flags = FLAGS_t {    zero      : pack((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)),
+                                        invalid   : pack((&rg_fp32.exponent == 1'b1)),
+                                        denormal  : 1'b0,
+                                        overflow  : pack((rg_fp32.exponent > exponent_overflow_limit) && (rg_fp32.mantissa[22:20] == 3'b111)),
+                                        underflow : pack(rg_fp32.exponent < exponent_underflow_limit)
+                                    };
+
+        cfloat143.sign = rg_fp32.sign;
+
+        if(lv_flags.zero == 1)
         begin
-            cfloat143.sign     = rg_fp32.sign;
-            cfloat143.exponent = 4'b0;
-            cfloat143.mantissa = 3'b0;
+            cfloat143.exponent = 4'd0;
+            cfloat143.mantissa = 3'd0;
         end
-        else if((rg_flags.invalid == 1) || (rg_flags.overflow == 1))
+        else if((lv_flags.invalid == 1) || (lv_flags.overflow == 1))
         begin
-            cfloat143.sign     = rg_fp32.sign;
             cfloat143.exponent = 4'b1111;
             cfloat143.mantissa = 3'b111;
         end
+        else if(lv_flags.underflow == 1)
+        begin
+            if (rg_fp32.exponent < (exponent_underflow_limit - 8'd4))
+            begin
+                cfloat143.exponent = 4'd0;
+                cfloat143.mantissa = 3'd0;
+            end
+            else if (rg_fp32.exponent == (exponent_underflow_limit - 8'd4))
+            begin
+                lv_flags.denormal = 1'b1;
+                
+                cfloat143.exponent = 4'd0;
+                
+                if (rg_fp32.mantissa[22:20] == 3'b000 || rg_fp32.mantissa[22:20] == 3'b001 || rg_fp32.mantissa[22:20] == 3'b010 || rg_fp32.mantissa[22:20] == 3'b011 )
+                begin
+                    cfloat143.mantissa = 3'b001;
+                end
+                else if (rg_fp32.mantissa[22:20] == 3'b100 || rg_fp32.mantissa[22:20] == 3'b101 || rg_fp32.mantissa[22:20] == 3'b110 || rg_fp32.mantissa[22:20] == 3'b111 )
+                begin
+                    cfloat143.mantissa = 3'b010;
+                end
+            end
+            else if (rg_fp32.exponent == (exponent_underflow_limit - 8'd3))
+            begin
+                lv_flags.denormal = 1'b1;
+
+                cfloat143.exponent = 4'd0;
+
+                if (rg_fp32.mantissa[22:20] == 3'b000 || rg_fp32.mantissa[22:20] == 3'b001 ) 
+                begin
+                    cfloat143.mantissa = 3'b010;
+                end
+                else if (rg_fp32.mantissa[22:20] == 3'b010 || rg_fp32.mantissa[22:20] == 3'b011 || rg_fp32.mantissa[22:20] == 3'b100 || rg_fp32.mantissa[22:20] == 3'b101 )
+                begin
+                    cfloat143.mantissa = 3'b011;
+                end
+                else if (rg_fp32.mantissa[22:20] == 3'b110 || rg_fp32.mantissa[22:20] == 3'b111 )
+                begin
+                    cfloat143.mantissa = 3'b100;
+                end
+            end
+            else if (rg_fp32.exponent == (exponent_underflow_limit - 8'd2))
+            begin
+
+                lv_flags.denormal = 1'b1;
+
+                cfloat143.exponent = 4'd0;
+
+                if (rg_fp32.mantissa[22:20] == 3'b000)
+                begin
+                    cfloat143.mantissa = 3'b100;
+                end
+                else if (rg_fp32.mantissa[22:20] == 3'b001 || rg_fp32.mantissa[22:20] == 3'b010)
+                begin
+                    cfloat143.mantissa = 3'b101;
+                end
+                else if (rg_fp32.mantissa[22:20] == 3'b011 || rg_fp32.mantissa[22:20] == 3'b100)
+                begin
+                    cfloat143.mantissa = 3'b110;
+                end
+                else if (rg_fp32.mantissa[22:20] == 3'b101 || rg_fp32.mantissa[22:20] == 3'b110 || rg_fp32.mantissa[22:20] == 3'b111 )
+                begin
+                    cfloat143.mantissa = 3'b111;
+                end
+            end
+            else if (rg_fp32.exponent == (exponent_underflow_limit - 8'd1))
+            begin
+                if (rg_fp32.mantissa[22:20] == 3'b000 || rg_fp32.mantissa[22:20] == 3'b001 || rg_fp32.mantissa[22:20] == 3'b010 || rg_fp32.mantissa[22:20] == 3'b011 )
+                begin
+                    lv_flags.denormal = 1'b1;
+
+                    cfloat143.exponent = 4'd0;
+                    cfloat143.mantissa = 3'b111;
+                end
+                else if (rg_fp32.mantissa[22:20] == 3'b100 || rg_fp32.mantissa[22:20] == 3'b101 || rg_fp32.mantissa[22:20] == 3'b110 || rg_fp32.mantissa[22:20] == 3'b111 )
+                begin
+                    cfloat143.exponent = 4'd1;
+                    cfloat143.mantissa = 3'b000;
+                end
+            end
+        end
         else  // Normal Case
         begin
-            cfloat143.sign = rg_fp32.sign;  // Sign is returned as it is.
-            if ((rg_fp32.exponent >= signExtend(1 - rg_bias)) || (rg_fp32.exponent <= signExtend(15 - rg_bias))) // If exponent>= 1-bias and exponent<=15-bias, then the exponent is in range, and returned.
-            begin
-                $display(" The exponent is: %d", rg_fp32.exponent);
-                Integer exp = unpack(rg_fp32.exponent);
-                cfloat143.exponent = pack(valueOf(exp));
+            cfloat143.exponent = truncate(rg_fp32.exponent - 8'd127 + zeroExtend(rg_bias));
+            Bit#(7) temp = {cfloat143.exponent,rg_fp32.mantissa[22:20]};
+            if (rg_fp32.mantissa[19] == 1'b1) begin
+              temp = temp + 7'd1;
+              if (temp == 7'd0) 
+                lv_flags.overflow = 1'd1;
             end
-            // Round to nearest positive with 3 bit mantissa.
-            cfloat143.mantissa = rg_fp32.mantissa[22:20];
+            cfloat143.exponent = temp[6:3];
+            cfloat143.mantissa = temp[2:0];
         end
+
+        rg_flags <= FLAGS_t {   zero      : lv_flags.zero,
+                                invalid   : lv_flags.invalid,
+                                denormal  : lv_flags.denormal,
+                                overflow  : lv_flags.overflow,
+                                underflow : lv_flags.underflow
+                            };
 
         rg_cfloat143 <= CFLOAT143_t{  sign: cfloat143.sign,
                                       exponent: cfloat143.exponent,
