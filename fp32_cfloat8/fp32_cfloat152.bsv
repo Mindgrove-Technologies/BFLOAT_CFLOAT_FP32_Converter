@@ -39,11 +39,11 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
   Reg#(Bit#(6)) rg_bias <- mkReg(0);
   
   /* doc: reg: contains the flags */
-  Reg#(FLAGS_t) rg_flags <- mkReg(FLAGS_t {zero     : 0,
-                                           invalid  : 0,
-                                           denormal : 0,
-                                           overflow : 0,
-                                           underflow: 0});
+  Reg#(CFLOAT_FLAGS_t) rg_flags <- mkReg(CFLOAT_FLAGS_t {zero     : 0,
+                                                         invalid  : 0,
+                                                         denormal : 0,
+                                                         overflow : 0,
+                                                         underflow: 0});
   
   /* doc: rule: */
   rule rl_convert_fp32_cfloat152;
@@ -68,7 +68,7 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
     
     Bit#(8) exponent_underflow_limit = 8'd128 - zeroExtend(rg_bias);
     
-    FLAGS_t flags;
+    CFLOAT_FLAGS_t flags;
     
     flags.zero      = pack(((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)) || (rg_fp32.exponent < exponent_underflow_limit - 8'd3) );
     flags.invalid   = pack((&rg_fp32.exponent == 1'b1));
@@ -148,9 +148,9 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
                                  exponent : cfloat152.exponent,
                                  mantissa : cfloat152.mantissa};
  
-    rg_flags <= FLAGS_t {zero     : flags.zero,
-                         invalid  : flags.invalid,
-                         overflow : flags.overflow};
+    rg_flags <= CFLOAT_FLAGS_t {zero     : flags.zero,
+                                invalid  : flags.invalid,
+                                overflow : flags.overflow};
 
   endrule: rl_convert_fp32_cfloat152
  
@@ -177,5 +177,99 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
     
   
 endmodule: mk_fp32_cfloat152
+
+(*always_ready, always_enabled*)
+interface Ifc_cfloat152_fp32;
+  method Action cfloat152_in (CFLOAT152_t cfloat_in);
+  method Action bias_in (Bit#(6) bias);
+  method FP32_t fp32_out;
+endinterface: Ifc_cfloat152_fp32
+
+(* synthesize *)
+module mk_cfloat152_fp32(Ifc_cfloat152_fp32); 
+  /* doc: reg: contains the fp32 representation */
+  Reg#(FP32_t) rg_fp32 <- mkReg(FP32_t {sign     :0,
+					exponent :0,
+					mantissa :0});
+  
+  /* doc: reg: contains the cfloat152 representation */
+  Reg#(CFLOAT152_t) rg_cfloat152 <- mkReg(CFLOAT152_t {sign     :0,
+						       exponent :0,
+						       mantissa :0});
+  
+  /* doc: reg: contains the configurable bias */
+  Reg#(Bit#(6)) rg_bias <- mkReg(0);
+  
+  /* doc: reg: contains the flags */
+  Reg#(FP32_FLAGS_t) rg_flags <- mkReg(FP32_FLAGS_t {denormal  : 0,
+                                                     zero      : 0,
+                                                     qNaN      : 0,
+                                                     infinity  : 0,
+                                                     sNaN      : 0});
+  
+  
+  rule rl_convert_cfloat152_fp32;
+    FP32_FLAGS_t fp32_flags = FP32_FLAGS_t {denormal  : 0,
+                                            zero      : 0,
+                                            qNaN      : 0,
+                                            infinity  : 0,
+                                            sNaN      : 0};
+    
+    FP32_t fp32 = FP32_t {sign     :0,
+                          exponent :0,
+                          mantissa :0};
+    
+    /* Zero */
+    fp32.sign = rg_cfloat152.sign;
+    if (|rg_cfloat152.exponent == 1'b0 && |rg_cfloat152.mantissa == 1'b0) begin
+      fp32.exponent = 8'd0;
+      fp32.mantissa = 23'd0;
+      fp32_flags.zero = 1'b1;
+    end
+    /* cfloat Denormal Numbers */
+    else if (|rg_cfloat152.exponent == 1'b0 && |rg_cfloat152.mantissa != 1'b0) begin
+      fp32.mantissa  = 23'd0;
+      if (rg_cfloat152.mantissa == 2'b01)
+        fp32.exponent = 8'd128 - 8'd3 - zeroExtend(rg_bias);
+      else if (rg_cfloat152.mantissa == 2'b10)
+        fp32.exponent = 8'd128 - 8'd2 - zeroExtend(rg_bias);
+      else begin
+        fp32.exponent     = 8'd128 - 8'd2 - zeroExtend(rg_bias);
+        fp32.mantissa[22] = 1'b1;
+      end
+    end
+    /* Normal Numbers */
+    else begin
+      fp32.mantissa[22:21] = rg_cfloat152.mantissa;
+      fp32.exponent        = zeroExtend(rg_cfloat152.exponent) - zeroExtend(rg_bias) + 8'd127;
+    end
+    
+    rg_fp32 <= FP32_t {sign     : fp32.sign,
+                       exponent : fp32.exponent,
+                       mantissa : fp32.mantissa};
+    
+    rg_flags <= FP32_FLAGS_t {denormal : fp32_flags.denormal,
+                              zero     : fp32_flags.zero,
+                              qNaN     : fp32_flags.qNaN,
+                              infinity : fp32_flags.infinity,
+                              sNaN     : fp32_flags.sNaN};
+    
+  endrule: rl_convert_cfloat152_fp32
+  
+  method Action cfloat152_in (CFLOAT152_t cfloat_in);
+    rg_cfloat152 <= cfloat_in;
+  endmethod: cfloat152_in
+  
+  method Action bias_in (Bit#(6) bias);
+    rg_bias <= bias;
+  endmethod: bias_in
+  
+  method FP32_t fp32_out;
+    return rg_fp32;
+  endmethod: fp32_out
+  
+  
+endmodule: mk_cfloat152_fp32
+
 
 endpackage: fp32_cfloat152

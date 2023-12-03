@@ -43,14 +43,15 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
 
     Reg#(Bit#(6)) rg_bias <- mkReg(0);
 
-    Reg#(FLAGS_t) rg_flags <- mkReg(FLAGS_t {zero    : 0,
+    Reg#(CFLOAT_FLAGS_t) rg_flags <- mkReg(CFLOAT_FLAGS_t {
+        zero    : 0,
         invalid  : 0,
         denormal : 0,
         overflow : 0,
         underflow: 0
     });
 
-    /* doc: rule: */
+    /* doc: rule: This rule will convert the FP32 number to CFLOAT Number. */
     rule rl_convert_fp32_cfloat8;
 
         /* doc: local: cfloat sign,exponent & mantissa local variables */
@@ -68,7 +69,7 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
             $display("Exponent Underflow Limit: %d", exponent_underflow_limit);
         `endif
 
-        FLAGS_t lv_flags = FLAGS_t {    zero      : pack((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)),
+        CFLOAT_FLAGS_t lv_flags = CFLOAT_FLAGS_t {    zero      : pack((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)),
                                         invalid   : pack((&rg_fp32.exponent == 1'b1)),
                                         denormal  : 1'b0,
                                         overflow  : pack((rg_fp32.exponent > exponent_overflow_limit) && (rg_fp32.mantissa[22:20] == 3'b111)),
@@ -77,16 +78,19 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
 
         cfloat143.sign = rg_fp32.sign;
 
+        /* Zero */
         if(lv_flags.zero == 1)
         begin
             cfloat143.exponent = 4'd0;
             cfloat143.mantissa = 3'd0;
         end
+        /* Invalid or Overflow */
         else if((lv_flags.invalid == 1) || (lv_flags.overflow == 1))
         begin
             cfloat143.exponent = 4'b1111;
             cfloat143.mantissa = 3'b111;
         end
+        /* Underflow and Denormal Numbers */
         else if(lv_flags.underflow == 1)
         begin
             if (rg_fp32.exponent < (exponent_underflow_limit - 8'd4))
@@ -168,7 +172,8 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
                 end
             end
         end
-        else  // Normal Case
+        /* Normal Numbers */
+        else
         begin
             cfloat143.exponent = truncate(rg_fp32.exponent - 8'd127 + zeroExtend(rg_bias));
             Bit#(7) temp = {cfloat143.exponent,rg_fp32.mantissa[22:20]};
@@ -181,12 +186,12 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
             cfloat143.mantissa = temp[2:0];
         end
 
-        rg_flags <= FLAGS_t {   zero      : lv_flags.zero,
-                                invalid   : lv_flags.invalid,
-                                denormal  : lv_flags.denormal,
-                                overflow  : lv_flags.overflow,
-                                underflow : lv_flags.underflow
-                            };
+        rg_flags <= CFLOAT_FLAGS_t {    zero      : lv_flags.zero,
+                                        invalid   : lv_flags.invalid,
+                                        denormal  : lv_flags.denormal,
+                                        overflow  : lv_flags.overflow,
+                                        underflow : lv_flags.underflow
+                                    };
 
         rg_cfloat143 <= CFLOAT143_t{  sign: cfloat143.sign,
                                       exponent: cfloat143.exponent,
@@ -224,36 +229,38 @@ module mk_cfloat143_fp32(Ifc_fpu_convert_cfloat143_fp32);
 
     Reg#(Bit#(6)) rg_bias <- mkReg(0);
 
-    Reg#(FLAGS_t) rg_flags <- mkReg(FLAGS_t {zero    : 0,
-        invalid  : 0,
+    Reg#(FP32_FLAGS_t) rg_flags <- mkReg(FP32_FLAGS_t {
         denormal : 0,
-        overflow : 0,
-        underflow: 0
+        zero     : 0,
+        qNaN     : 0,
+        infinity : 0,
+        sNaN     : 0
     });
 
-    FLAGS_t lv_flags = FLAGS_t  {   zero    : 0,
-                                    invalid  : 0,
-                                    denormal : 0,
-                                    overflow : 0,
-                                    underflow: 0
-                                };
-
+    /* doc: rule: This rule will convert the CFLOAT Number to FP32 number. */
     rule rl_convert_cfloat8_fp32;
 
         FP32_t lv_fp32 = FP32_t{ sign: 0, exponent: 0, mantissa: 0};
 
+        FP32_FLAGS_t lv_flags = FP32_FLAGS_t  {
+                                        denormal : 0,
+                                        zero     : 0,
+                                        qNaN     : 0,
+                                        infinity : 0,
+                                        sNaN     : 0 
+                                    };
+
         /* Zero */
         if(rg_cfloat143.exponent == 4'd0 && rg_cfloat143.mantissa == 3'd0)
         begin
-            // lv_flags.zero = 1;
+            lv_flags.zero = 1;
             lv_fp32.sign = rg_cfloat143.sign;
             lv_fp32.exponent = zeroExtend(rg_cfloat143.exponent);
             lv_fp32.mantissa[22:20] = rg_cfloat143.mantissa;
         end
-        /* Denormal */
+        /* Denormal Numbers */
         else if(|rg_cfloat143.exponent == 'd0 && |rg_cfloat143.mantissa != 'd0)
         begin
-            // lv_flags.denormal = 1;
             lv_fp32.sign = rg_cfloat143.sign;
 
             if(rg_cfloat143.mantissa == 3'b001)
@@ -289,7 +296,7 @@ module mk_cfloat143_fp32(Ifc_fpu_convert_cfloat143_fp32);
                 lv_fp32.mantissa[22:21] = 2'b11;
             end
         end
-        /* Normal */
+        /* Normal Numbers */
         else
         begin
             lv_fp32.sign = rg_cfloat143.sign;
@@ -297,7 +304,16 @@ module mk_cfloat143_fp32(Ifc_fpu_convert_cfloat143_fp32);
             lv_fp32.mantissa[22:20] = rg_cfloat143.mantissa;
         end
 
-        rg_fp32 <= FP32_t { sign      : lv_fp32.sign,
+        rg_flags <= FP32_FLAGS_t {
+                                    denormal : lv_flags.denormal ,
+                                    zero     : lv_flags.zero     ,
+                                    qNaN     : lv_flags.qNaN     ,
+                                    infinity : lv_flags.infinity ,
+                                    sNaN     : lv_flags.sNaN        
+                                 };
+
+        rg_fp32 <= FP32_t { 
+                            sign      : lv_fp32.sign,
                             exponent  : lv_fp32.exponent,
                             mantissa  : lv_fp32.mantissa 
                           };
