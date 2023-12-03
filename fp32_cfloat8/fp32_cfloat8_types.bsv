@@ -31,7 +31,15 @@ typedef struct{
   Bit#(1) denormal;
   Bit#(1) overflow;
   Bit#(1) underflow;
-}FLAGS_t deriving(Bits,Eq);
+}CFLOAT_FLAGS_t deriving(Bits,Eq);
+
+typedef struct{
+  Bit#(1) denormal;
+  Bit#(1) zero;
+  Bit#(1) qNaN;
+  Bit#(1) infinity;
+  Bit#(1) sNaN;
+}FP32_FLAGS_t deriving(Bits,Eq);
 
 
 endpackage: fp32_cfloat8_types
