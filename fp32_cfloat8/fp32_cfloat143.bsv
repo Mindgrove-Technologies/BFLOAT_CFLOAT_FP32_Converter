@@ -231,12 +231,82 @@ module mk_cfloat143_fp32(Ifc_fpu_convert_cfloat143_fp32);
         underflow: 0
     });
 
+    FLAGS_t lv_flags = FLAGS_t  {   zero    : 0,
+                                    invalid  : 0,
+                                    denormal : 0,
+                                    overflow : 0,
+                                    underflow: 0
+                                };
+
     rule rl_convert_cfloat8_fp32;
-        rg_fp32.sign <= rg_cfloat143.sign;
+
+        FP32_t lv_fp32 = FP32_t{ sign: 0, exponent: 0, mantissa: 0};
+
+        /* Zero */
+        if(rg_cfloat143.exponent == 4'd0 && rg_cfloat143.mantissa == 3'd0)
+        begin
+            // lv_flags.zero = 1;
+            lv_fp32.sign = rg_cfloat143.sign;
+            lv_fp32.exponent = zeroExtend(rg_cfloat143.exponent);
+            lv_fp32.mantissa[22:20] = rg_cfloat143.mantissa;
+        end
+        /* Denormal */
+        else if(|rg_cfloat143.exponent == 'd0 && |rg_cfloat143.mantissa != 'd0)
+        begin
+            // lv_flags.denormal = 1;
+            lv_fp32.sign = rg_cfloat143.sign;
+
+            if(rg_cfloat143.mantissa == 3'b001)
+            begin
+                lv_fp32.exponent = 128 - zeroExtend(rg_bias) - 4;
+            end
+            if(rg_cfloat143.mantissa == 3'b010)
+            begin
+                lv_fp32.exponent = 128 - zeroExtend(rg_bias) - 3;
+            end
+            if(rg_cfloat143.mantissa == 3'b011)
+            begin
+                lv_fp32.exponent = 128 - zeroExtend(rg_bias) - 3;
+                lv_fp32.mantissa[22] = 1;
+            end
+            if(rg_cfloat143.mantissa == 3'b100)
+            begin
+                lv_fp32.exponent = 128 - zeroExtend(rg_bias) - 2;
+            end
+            if(rg_cfloat143.mantissa == 3'b101)
+            begin
+                lv_fp32.exponent = 128 - zeroExtend(rg_bias) - 2;
+                lv_fp32.mantissa[22:21] = 2'b01;
+            end
+            if(rg_cfloat143.mantissa == 3'b110)
+            begin
+                lv_fp32.exponent = 128 - zeroExtend(rg_bias) - 2;
+                lv_fp32.mantissa[22] = 1;
+            end
+            if(rg_cfloat143.mantissa == 3'b111)
+            begin
+                lv_fp32.exponent = 128 - zeroExtend(rg_bias) - 2;
+                lv_fp32.mantissa[22:21] = 2'b11;
+            end
+        end
+        /* Normal */
+        else
+        begin
+            lv_fp32.sign = rg_cfloat143.sign;
+            lv_fp32.exponent = zeroExtend(rg_cfloat143.exponent) - zeroExtend(rg_bias) + 127;
+            lv_fp32.mantissa[22:20] = rg_cfloat143.mantissa;
+        end
+
+        rg_fp32 <= FP32_t { sign      : lv_fp32.sign,
+                            exponent  : lv_fp32.exponent,
+                            mantissa  : lv_fp32.mantissa 
+                          };
+    
     endrule: rl_convert_cfloat8_fp32
 
     method Action convert_cfloat143_fp32(CFLOAT143_t cfloat143_in, Bit#(6) bias);
         rg_cfloat143 <= cfloat143_in;
+        rg_bias <= bias;
     endmethod: convert_cfloat143_fp32
 
     method FP32_t get_fp32();
