@@ -24,9 +24,9 @@ module mk_fp32_bfloat16(Ifc_fp32_bfloat16);
 					                              mantissa :0});
   
   /* doc: reg: contains the bfloat16 representation */
-  Reg#(BFLOAT16_t) rg_cfloat152 <- mkReg(BFLOAT16_t {sign     :0,
-						                                         exponent :0,
-						                                         mantissa :0});
+  Reg#(BFLOAT16_t) rg_bfloat16 <- mkReg(BFLOAT16_t {sign     :0,
+						                                        exponent :0,
+						                                        mantissa :0});
 
   /* doc: reg: contains the flags for the conversion */
   Reg#(FLAGS_t) rg_flags <- mkReg(FLAGS_t {denormal  : 0,
@@ -38,19 +38,57 @@ module mk_fp32_bfloat16(Ifc_fp32_bfloat16);
 
     /* doc: rule: rule to convert fp32 to bfloat16
      * Implicit cond: None
+     * Explicit cond: None
+     * Desc: conversion from fp32 to bfloat16 with round-to-nearest conversion strategy
+     */
      
     rule rl_convert_fp32_bfloat16;
-    BFLOAT16_t bfloat16 = BFLOAT16_t {sign     : 0,
-                                      exponent : 0,
-                                      mantissa : 0});
-    FLAGS_t flags;
+      
+      BFLOAT16_t bfloat16 = BFLOAT16_t {sign     : 0,
+                                        exponent : 0,
+                                        mantissa : 0});
+      FLAGS_t flags;
+      
+       
+      /* Computing flags */
+      flags.zero     = pack(|rg_fp32.exponent == 1'b0 && |rg_fp32.mantissa == 1'b0);
+      flags.infinity = pack(|rg_fp32.exponent == 1'b1);
+      flags.qNaN     = pack(|rg_fp32.exponent == 1'b1 && rg_fp32.mantissa == 23'b10000000000000000000001);
+      flags.sNaN     = pack(|rg_fp32.exponent == 1'b1 && rg_fp32.mantissa == 23'b00000000000000000000001);
+      flags.denormal = 1'b0;
 
-    /* Computing flags */
-    
-    
-    
-    /* Zero */
-    
+
+      /* Zero */
+      if(flags.zero == 1'b1) begin
+        bfloat16.exponent = 8'd0;
+        bfloat16.mantissa = 7'd0;
+      end
+      /* Infinity */
+      else if (flags.infinity == 1'b1) begin
+        bfloat16.exponent = 8'b11111111;
+        bfloat16.mantissa = 7'd0;
+      end
+      //TODO Check the difference between qNaN and sNaN
+      /* qNaN */
+      else if(flags.qNaN == 1'b1) begin
+        bfloat16.exponent = 8'b11111111;
+        bfloat16.mantissa == 7'b1000001
+      end
+      /* sNaN */
+      else if(flags.sNaN == 1'b1) begin
+        bfloat16.exponent = 8'b11111111;
+        bfloat16.mantissa == 7'b0000001
+      end
+      /* Normal Numbers*/
+      else begin
+        bfloat16.exponent = rg_fp32.exponent;
+        Bit#(15) temp = {bfloat16.exponent,rg_fp32.mantissa[22:16]};
+        if (rg_fp32.mantissa[16] == 1'b1) begin
+          temp = temp + 15'd1;
+        end
+        bfloat16.exponent = temp[15:8];
+        cfloat1.mantissa = temp[7:0];
+      end
     
 
 
@@ -107,10 +145,34 @@ module mk_bfloat16_fp32(Ifc_cfloat16_fp32);
       fp32.exponent = rg_bfloat16.exponent;
       fp32.mantissa[22:16] = rg_bfloat16.mantissa;
     end
-    else if(rg_bfloat16.exponent == 8'b11111111)
+    else if(rg_bfloat16.exponent == 8'b11111111 && rg_bfloat16.mantissa == 7'b0000000)
     begin
+      fp32_flags.infinity = 1;
       fp32.exponent = rg_bfloat16.exponent;
       fp32.mantissa[22:16] = rg_bfloat16.mantissa;
+    end
+    else if(rg_bfloat16.exponent == 8'b11111111 && rg_bfloat16.mantissa == 7'b1000001)
+    begin
+      fp32_flags.qNaN = 1;
+      fp32.exponent = rg_bfloat16.exponent;
+      fp32.mantissa = 23'b10000000000000000000001;
+    end
+    else if(rg_bfloat16.exponent == 8'b11111111 && rg_bfloat16.mantissa == 7'b0000001)
+    begin
+      fp32_flags.sNaN = 1;
+      fp32.exponent = rg_bfloat16.exponent;
+      fp32.mantissa = 23'b00000000000000000000001;
+    end
+    // else if(rg_bfloat16.exponent == 8'b00000000 && rg_bfloat16.mantissa != 7'b0000001 && rg_bfloat16.mantissa != 7'b1000001 && rg_bfloat,mantissa)
+    // begin
+    //   fp32_flags.denormal = 1;
+    //   fp32.exponent = rg_bfloat16.exponent;
+    //   fp32.mantissa[22:16] = rg_fp32.mantissa;
+    // end
+    else
+    begin
+      fp32.exponent = rg_bfloat16.exponent;
+      fp32.mantissa[22:16] = rg_fp32.mantissa;
     end
     
     rg_fp32 <= FP32_t {sign     : fp32.sign,
@@ -126,9 +188,9 @@ module mk_bfloat16_fp32(Ifc_cfloat16_fp32);
   endrule: rl_convert_bfloat16_fp32
 
   
-  method Action cfloat152_in (CFLOAT152_t cfloat_in);
-    rg_cfloat152 <= cfloat_in;
-  endmethod: cfloat152_in
+  method Action bfloat16_in (BFLOAT16_t bfloat16_in);
+    rg_bfloat16 <= bfloat16_in;
+  endmethod: bfloat16_in
   
   method FP32_t fp32_out;
     return rg_fp32;
