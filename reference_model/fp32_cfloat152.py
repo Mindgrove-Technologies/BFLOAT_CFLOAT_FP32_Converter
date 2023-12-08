@@ -6,8 +6,9 @@ logging.basicConfig(level=logging.INFO)
 
 # Temporary variables
 # fp32_in = 3.75
-fp32_in = 3758096385.0
-bias = 1
+# fp32_in = 3758096385.0
+fp32_in = 0.1
+bias = 0
 ###################
 
 dict_n = {}
@@ -71,9 +72,31 @@ elif (fp32_in < dict_n[1][0]):
             target_denormal = 1
         else:
             flags_zero = 1
+    elif (dict_d [1] <= fp32_in < dict_d[2]):
+        DIFF = dict_d[2] - dict_d[1]
+        flags_denormal = 1
+        if (fp32_in >= dict_d[1] + (DIFF/2)):
+            target_denormal = 2
+        else:
+            target_denormal = 1
+    elif (dict_d [2] <= fp32_in < dict_d[3]):
+        DIFF = dict_d[3] - dict_d[2]
+        flags_denormal = 1
+        if (fp32_in >= dict_d[2] + (DIFF/2)):
+            target_denormal = 3
+        else:
+            target_denormal = 2
+    elif (dict_d [3] <= fp32_in < dict_n[1][0]):
+        DIFF = dict_n[1][0] - dict_d[3]
+        if (fp32_in >= dict_d[3] + (DIFF/2)):
+            target_exponent = 1
+            output = 0
+        else:
+            flags_denormal = 1
+            target_denormal = 3
     else:
-        if (fp32_in >= dict_d[1] and fp32_in ):
-    
+        logging.error ("NOT POSSIBLE CONDITION")
+    CONV_DONE = True
 else:
     # Normal Numbers
     for e in range(1,32):
