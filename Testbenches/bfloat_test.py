@@ -118,7 +118,7 @@ if __name__ == "__main__" :
 	# Next 8 bits will be 
 	# Exponent Bits in Biased
 	# form.
-	exponent_bias = int(ieee_32[2 : 10], 2)
+	exponent_bias = int(ieee_32[1 : 9], 2)
 
 	# In 32 Bit format bias
 	# value is 127 so to have
@@ -128,7 +128,7 @@ if __name__ == "__main__" :
 
 	# Next 23 Bits will be
 	# Mantissa (1.M format)
-	mantissa_str = ieee_32[11 : ]
+	mantissa_str = ieee_32[9 : ]
 
 	# Function call to convert
 	# 23 binary bits into 
