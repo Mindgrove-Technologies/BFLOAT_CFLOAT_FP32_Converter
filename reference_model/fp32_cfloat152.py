@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Temporary variables
-fp32_in = 3.6
+fp32_in = 3.5
 bias = 0
 ###################
 
@@ -37,7 +37,7 @@ for e in range(1,32):
 logging.debug(dict_n)
 logging.info("Checking if the given fp32 is within limits of the cfloat152")
 for e in range(1,32):
-    if (dict_n[e][0] < fp32_in < dict_n[e][-1]):
+    if (dict_n[e][0] <= fp32_in <= dict_n[e][-1]):
         target_exponent = e
         inside_list = 1
     elif (dict_n[e][-1] < fp32_in < dict_n[e+1][0]):
@@ -50,10 +50,8 @@ for e in range(1,32):
 if (inside_list):
     for i in range(4):
         if (fp32_in > dict_n[target_exponent][i]):
-            # print("greater than",i)
             before = i
         elif (fp32_in < dict_n[target_exponent][i]):
-            # print("less than",i)
             after=i
             break
         else:
