@@ -20,11 +20,11 @@ def cfloat_bin(sign,exponent, mantissa):
         bin_mantissa = "11"
 
     bin_cfloat = bin_sign + bin_exponent + bin_mantissa
-    print(bin_cfloat)
+    return bin_cfloat
 
 
 
-def convert_fp32_cfloat152(fp32_in, bias, ret_bin):
+def convert_fp32_cfloat152(fp32_in, bias):
     dict_n = {}
     dict_d = {}
     target_exponent = 0
@@ -145,7 +145,7 @@ def convert_fp32_cfloat152(fp32_in, bias, ret_bin):
             if(not CONV_DONE):
                 logging.info("Performing Rounding")
                 DIFF = dict_n[target_exponent][after] - dict_n[target_exponent][before]
-                print(dict_n[target_exponent][before] + (DIFF/2))
+                # print(dict_n[target_exponent][before] + (DIFF/2))
                 if (fp32_in >= (dict_n[target_exponent][before] + (DIFF/2))):
                     logging.debug("Rounding Needed")
                     output = after
@@ -178,22 +178,22 @@ def convert_fp32_cfloat152(fp32_in, bias, ret_bin):
         logging.error("Conversion is not done")
         sys.exit()
 
-    print("ANSWER =",CFLOAT152)
-    if (ret_bin == 1):
-        if (flags_zero == 1):
-            cfloat_bin(sign, 0, 0)
-        elif (flags_denormal == 1):
-            cfloat_bin(sign, 0, target_denormal)
-        else:
-            cfloat_bin(sign,target_exponent,output)
-        
+    # print("ANSWER =",CFLOAT152)
+    if (flags_zero == 1):
+        bin_out = cfloat_bin(sign, 0, 0)
+    elif (flags_denormal == 1):
+        bin_out = cfloat_bin(sign, 0, target_denormal)
+    else:
+        bin_out = cfloat_bin(sign,target_exponent,output)
+    return bin_out
+
 def main():
     logging.basicConfig(level=logging.INFO)
     fp32_in = 0.125
     bias = 0
-    convert_fp32_cfloat152(fp32_in, bias, 1)
+    convert_fp32_cfloat152(fp32_in, bias)
         
-main()
+# main()
         
 # print("[DEBUG]: exponent",target_exponent)
 # print("[DEBUG]: before",before)
