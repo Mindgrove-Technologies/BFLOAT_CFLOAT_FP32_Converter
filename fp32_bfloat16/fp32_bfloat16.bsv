@@ -17,6 +17,7 @@ interface Ifc_fp32_bfloat16;
   method BFLOAT16_t bfloat16_out; 
 endinterface: Ifc_fp32_bfloat16
 
+(* synthesize *)
 module mk_fp32_bfloat16(Ifc_fp32_bfloat16);
   /* doc: reg: contains the fp32 representation */
   Reg#(FP32_t) rg_fp32 <- mkReg(FP32_t {sign     :0,
