@@ -8,7 +8,7 @@ TOPMODULE ?= mkTestbench
 
 BSC_COMP_FLAGS = -elab -keep-fires -aggressive-conditions -no-warn-action-shadowing
 BSC_LINK_FLAGS = -keep-fires
-BSC_PATHS = -p %/Prelude:%/Libraries:./fp32_cfloat8/
+BSC_PATHS = -p %/Prelude:%/Libraries:./fp32_cfloat8/:./fp32_bfloat16
 # BSC_PATHS = -p %/Prelude:%/Libraries:/media/kapil/Kapil-Drive/xspi/
 # BSC_PATHS = -p %/Prelude:%/Libraries:/home/kapil/Shakti-Software-Development/Mindgrove/devices-xspi/xspi/
 
