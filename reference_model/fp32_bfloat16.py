@@ -59,26 +59,33 @@ def IEEE754(n) :
 
 # Driver Code
 if __name__ == "__main__" :
-	elemns = 10
+	elemns = 1
 	a = torch.rand(elemns, dtype=torch.float32)
 	b = a.float()
 	c = b.bfloat16()
-	# print(f"got {(c>a).sum()} elements rounded up out of {elemns}")
-	# print(c,a)
+
 	float_list = b.tolist()
 	float_list_binary = []
 
-	print(float_list)
+	# print(float_list)
 	for i in range(elemns):
 		fp32_binary = IEEE754(float_list[i])
 		float_list_binary.append(IEEE754(float_list[i]))
 		# print (fp32_binary)
 		
+	print("FP32 Binaries are: ")
 	print(float_list_binary)
 	
 	bfloat_list = c.tolist()
-	print(bfloat_list)
+
+	bfloat_list_binary = []
+
+	# print(bfloat_list)
 	for i in range(elemns):
 		bfloat_binary_temp = IEEE754(bfloat_list[i])
 		bfloat_binary = bfloat_binary_temp[0:16]
+		bfloat_list_binary.append(bfloat_binary)
 		# print (bfloat_binary)
+
+	print("BFLOAT16 Binaries are: ")
+	print(bfloat_list_binary)
