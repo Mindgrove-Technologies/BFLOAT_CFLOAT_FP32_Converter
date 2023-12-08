@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 # Temporary variables
 # fp32_in = 3.75
 # fp32_in = 3758096385.0
-fp32_in = 0.1
+fp32_in = -0.5
 bias = 0
 ###################
 
@@ -22,6 +22,7 @@ output=0
 CONV_DONE=False
 flags_zero = 0
 flags_denormal = 0
+sign = 0
 #################################
 
 logging.info("Initiallizing the dictionary with all normal numbers possible for the given bias")
@@ -53,6 +54,11 @@ for m in range(1,4):
 logging.debug(f"[NORMAL],{dict_n}")
 logging.debug(f"[DENORMAL],{dict_d}")
 logging.info("Checking if the given fp32 is within limits of the cfloat152")
+if (fp32_in < 0):
+    sign = 1
+    fp32_in = -(fp32_in)
+else:
+    sign = 0
 #Zero Conditon
 if (fp32_in == 0):
     flags_zero = 1
@@ -153,6 +159,8 @@ if(CONV_DONE):
         CFLOAT152 = dict_d[target_denormal]
     else:
         CFLOAT152 = dict_n[target_exponent][output]
+    if (sign == 1):
+        CFLOAT152 = (-CFLOAT152)
 else:
     logging.error("Conversion is not done")
     sys.exit()
