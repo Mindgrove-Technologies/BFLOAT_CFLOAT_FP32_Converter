@@ -1,4 +1,3 @@
-C
 package fp32_cfloat8_types;
 
 
