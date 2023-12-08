@@ -53,9 +53,9 @@ module mk_fp32_bfloat16(Ifc_fp32_bfloat16);
        
       /* Computing flags */
       flags.zero     = pack(|rg_fp32.exponent == 1'b0 && |rg_fp32.mantissa == 1'b0);
-      flags.infinity = pack(|rg_fp32.exponent == 1'b1 && |rg_fp32.mantissa == 1'b0);
-      flags.qNaN     = pack(|rg_fp32.exponent == 1'b1 && rg_fp32.mantissa[22] == 1'b1 && rg_fp32.mantissa[0] == 1'b1);
-      flags.sNaN     = pack(|rg_fp32.exponent == 1'b1 && rg_fp32.mantissa[22] == 1'b0 && rg_fp32.mantissa[0] == 1'b1);
+      flags.infinity = pack(&rg_fp32.exponent == 1'b1 && |rg_fp32.mantissa == 1'b0);
+      flags.qNaN     = pack(&rg_fp32.exponent == 1'b1 && rg_fp32.mantissa[22] == 1'b1 && rg_fp32.mantissa[0] == 1'b1);
+      flags.sNaN     = pack(&rg_fp32.exponent == 1'b1 && rg_fp32.mantissa[22] == 1'b0 && rg_fp32.mantissa[0] == 1'b1);
       flags.denormal = pack(|rg_fp32.exponent == 1'b0 && (flags.qNaN == 0) && (flags.sNaN == 0) && (flags.zero == 0));
 
 

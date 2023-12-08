@@ -14,6 +14,8 @@ def float_bin(my_number, places = 3):
 		res += my_whole
 	return res
 
+
+
 def IEEE754(n) : 
 	# identifying whether the number
 	# is positive or negative
@@ -54,21 +56,36 @@ def IEEE754(n) :
 	# hstr = '0x%0*X' %((len(final) + 3) // 4, int(final, 2)) 
 	return (final)
 
-def convert_fp32_bfloat16(fp32_in):
 
-	bfloat_val = fp32_in.bfloat16()
-	bfloat_list = bfloat_val.tolist()
+# Driver Code
+if __name__ == "__main__" :
+	elemns = 1
+	a = torch.rand(elemns, dtype=torch.float32)
+	b = a.bfloat16()
+	c = b.float()
+	
+	bfloat_list = b.tolist()
 
 	bfloat_list_binary = []
 
 	# print(bfloat_list)
-	for i in range(1):
-		bfloat_binary_temp = IEEE754(bfloat_list)
+	for i in range(elemns):
+		bfloat_binary_temp = IEEE754(bfloat_list[i])
 		bfloat_binary = bfloat_binary_temp[0:16]
 		bfloat_list_binary.append(bfloat_binary)
 		# print (bfloat_binary)
 
-	# print("BFLOAT16 Binaries are: ")
-	# print(bfloat_list_binary)
+	print("BFLOAT16 Binaries are: ")
+	print(bfloat_list_binary)
 
-	return bfloat_list_binary[0]
+	float_list = c.tolist()
+	float_list_binary = []
+
+	# print(float_list)
+	for i in range(elemns):
+		fp32_binary = IEEE754(float_list[i])
+		float_list_binary.append(IEEE754(float_list[i]))
+		# print (fp32_binary)
+		
+	print("FP32 Binaries are: ")
+	print(float_list_binary)
