@@ -153,7 +153,7 @@ def convert_fp32_cfloat143(fp32_in, bias , neg_zero):
             else:
                 target_denormal = 5
         elif (dict_d [6] <= fp32_in < dict_d[7]):
-            DIFF = dict_d[5] - dict_d[6]
+            DIFF = dict_d[7] - dict_d[6]
             flags_denormal = 1
             if (fp32_in >= dict_d[6] + (DIFF/2)):
                 target_denormal = 7
