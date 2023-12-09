@@ -1,9 +1,14 @@
 #+TITLE: FP Convertor Modules
 #+AUTHOR: Rohit Srinivas R G (CS23Z002), M Kapil Shyam (CS23Z064)
 
-* TABLE OF CONTENT :TOC:
+* TABLE OF CONTENT :TOC_2:
 - [[#description][DESCRIPTION]]
-- [[#repository-structure][Repository structure]]
+- [[#repository-structure][REPOSITORY STRUCTURE]]
+- [[#design][DESIGN]]
+  - [[#fp32---cfloat8][FP32 -> CFLOAT8]]
+  - [[#cfloat8---fp32][CFLOAT8 -> FP32]]
+  - [[#fp32---bfloat16][FP32 -> BFLOAT16]]
+  - [[#bfloat16---fp32][BFLOAT16 -> FP32]]
 
 * DESCRIPTION
 
@@ -16,7 +21,7 @@ This project is undertaken as part of project work for the course CS6230 CAD FOR
 - cfloat8 1_4_3 to fp32
 - bfloat16      to fp32
 
-* Repository structure
+* REPOSITORY STRUCTURE
 #+begin_src
 .
 ├── doc/                  [Contains the reference document for modules]
@@ -35,3 +40,75 @@ This project is undertaken as part of project work for the course CS6230 CAD FOR
     └── fp32_cfloat152    [Contains cocotb-testbenche for fp32 to cfloat152 conversion]
 
 #+end_src
+
+* DESIGN
+
+** FP32 -> CFLOAT8
+
+Required Inputs  : *32-bit FP Number* and *bias*
+Generated Output : *8-bit CFLOAT152 Binary 1_4_3 & 1_5_2*
+
+*** Supports Overflow mechanism
+
+If the given *input 32-bit number is greater than the largest representable normal number* for the *given bias* an overflow condtion is triggered, this implementation sets the output thar largest representable normal number for the given bias.
+
+*** Supports Gradual Underflow with denormal/subnormal handling
+
+If the given *input 32-bit number is lesser than smallest representable normal number* for the *given bias* an underflow condtion is triggered. this implementation supports gradual underflow with denormal handling. This allows the underflow numbers to be mapped to denormal numbers. Excluding 0 mantissa we can try to represent underflow numbers with denormal numbers [3 for cfloat152 and 7 for cfloat143]. If the given number does not exactly map with the denormal numbers , then round to nearest is used to set the output.
+
+*** Supports round-to-nearest rounding mechanism but *does not support stochastic rounding*
+
+The rounding mechanism deployed here round-to-nearest, which works in the following way. Assuming the given number is between two float number that are representable in cfloat binary space [for eg 2 , 2.5]. If the given number is greater than or equal ~(lesser_num + difference of two numbers/2)~ then the digits are round to be represent as the larger number else the number is represented as smaller number. This technique is the same for both positive , negative numbers (only the magnitude is taken for rounding computation) as well as the gradual underflow mechanism.
+
+#+begin_comment
+
+In the given example 2, 2.5
+if the input >= 2.25, then the rounded output will be 2.5
+if the input <  2.24, then the rounded output will be 2
+
+#+end_comment
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting fp32 zeroes to cfloat8 zeroes the sign bit is preserved.
+
+** CFLOAT8 -> FP32
+
+Required Inputs  : *8-bit CFLOAT152 Binary 1_4_3 (or) 1_5_2* and *bias*
+Generated Output : *32-bit FP Number*
+
+CFLOAT8 (8-bit) is a lower precision system when compared to FP32(32-bit). All representable cfloat numbers can be directly represented as normal numbers in the Single Precision space.
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting cfloat8 zeroes to fp32 zeroes the sign bit is preserved.
+
+** FP32 -> BFLOAT16
+
+Required Inputs  : *32-bit FP Number*
+Generated Output : *16-bit BFLOAT16 1:sign 8:exponent 7:mantissa*
+
+
+*** Supports Overflow mechanism
+
+As the exponent range of bfloat16 is same as FP32, the only case of overflow is due to extra mantissa bits supported in the FP32. The overflow condition sets the output to infinity
+
+*** Supports round-to-nearest-even rounding mechanism
+
+This implementation supports the IEEE standard round mechanism of round to nearest even. The objective is to solve for any contention when the given input lies between two possible values by representing it as the value which is even.
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting fp32 zeroes to bfloat16 zeroes the sign bit is preserved.
+
+
+** BFLOAT16 -> FP32
+
+Required Inputs  : *16-bit BFLOAT16 1:sign 8:exponent 7:mantissa*
+Generated Output : *32-bit FP Number*
+
+BFLOAT16 (16-bit) is a lower precision system when compared to FP32(32-bit). All representable bfloat numbers can be directly represented as normal numbers in the Single Precision space. The conversion mechanism is padding 16 zeroes to the mantissa of the given bfloat number and the output is 32-bit.
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting bfloat16 zeroes to fp32 zeroes the sign bit is preserved.
