@@ -24,7 +24,7 @@ def cfloat_bin(sign,exponent, mantissa):
 
 
 
-def convert_fp32_cfloat152(fp32_in, bias):
+def convert_fp32_cfloat152(fp32_in, bias , neg_zero):
     dict_n = {}
     dict_d = {}
     target_exponent = 0
@@ -36,6 +36,8 @@ def convert_fp32_cfloat152(fp32_in, bias):
     flags_zero = 0
     flags_denormal = 0
     sign = 0
+
+    
     #################################
 
     logging.info("Initiallizing the dictionary with all normal numbers possible for the given bias")
@@ -67,7 +69,7 @@ def convert_fp32_cfloat152(fp32_in, bias):
     logging.debug(f"[NORMAL],{dict_n}")
     logging.debug(f"[DENORMAL],{dict_d}")
     logging.info("Checking if the given fp32 is within limits of the cfloat152")
-    if (fp32_in < 0):
+    if (fp32_in < 0 or (fp32_in == 0 and neg_zero == 1)):
         sign = 1
         fp32_in = -(fp32_in)
     else:
