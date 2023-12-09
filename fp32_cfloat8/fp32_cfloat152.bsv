@@ -27,13 +27,13 @@ endinterface: Ifc_fp32_cfloat152
 module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
   /* doc: reg: contains the fp32 representation */
   Reg#(FP32_t) rg_fp32 <- mkReg(FP32_t {sign     :0,
-					exponent :0,
-					mantissa :0});
+          exponent :0,
+          mantissa :0});
   
   /* doc: reg: contains the cfloat152 representation */
   Reg#(CFLOAT152_t) rg_cfloat152 <- mkReg(CFLOAT152_t {sign     :0,
-						       exponent :0,
-						       mantissa :0});
+                                                       exponent :0,
+                                                       mantissa :0});
   
   /* doc: reg: contains the configurable bias */
   Reg#(Bit#(6)) rg_bias <- mkReg(0);
@@ -70,34 +70,50 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
     
     CFLOAT_FLAGS_t flags;
     
-    flags.zero      = pack(((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)) || (rg_fp32.exponent < exponent_underflow_limit - 8'd3) );
+    flags.zero      = pack(((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)) || (rg_fp32.exponent < exponent_underflow_limit - 8'd4) );
     flags.invalid   = pack((&rg_fp32.exponent == 1'b1));
-    flags.overflow  = pack((rg_fp32.exponent > exponent_overflow_limit) 
-                       && (rg_fp32.mantissa[22:21] == 2'b11));
+    flags.overflow  = pack(((rg_fp32.exponent == exponent_overflow_limit) 
+                       && (rg_fp32.mantissa[22:21] == 2'b11)) || rg_fp32.exponent > exponent_overflow_limit);
     flags.underflow = pack(rg_fp32.exponent < exponent_underflow_limit); 
     flags.denormal = 1'd0;
 
+
   `ifdef verbose
-    $display("Limit %d",exponent_overflow_limit);
+    $display($time," overflow %d",flags.overflow);
+    $display($time," fp32_exponent %d",rg_fp32.exponent);
+    $display("Limit %d",exponent_underflow_limit);
   `endif
     cfloat152.sign     = rg_fp32.sign;
     /* doc: Conversion to zero*/
     if(flags.zero == 1'b1) begin
+    `ifdef verbose 
+      $display($time,"Zero");
+    `endif
       cfloat152.exponent = 5'd0;
       cfloat152.mantissa = 2'd0;
     end
     /* doc: Overflow */
     else if((flags.invalid == 1'b1 ) || (flags.overflow == 1'b1)) begin
+    `ifdef verbose 
+      $display($time,"Overflow");
+    `endif
       // cfloat152.sign     = rg_fp32.sign;
       cfloat152.exponent = 5'b11111;
       cfloat152.mantissa = 2'b11;
     end
     /* doc: Underflow */
     else if(flags.underflow == 1'b1) begin
-      if (rg_fp32.exponent < exponent_underflow_limit - 8'd3) begin
-        // cfloat152.sign     = rg_fp32.sign;
+    `ifdef verbose
+      $display($time, "Underflow");
+    `endif
+      if (rg_fp32.exponent < exponent_underflow_limit - 8'd4) begin
         cfloat152.exponent = 5'd0;
         cfloat152.mantissa = 2'd0;
+      end
+      else if (rg_fp32.exponent == exponent_underflow_limit - 8'd4) begin
+        cfloat152.exponent = 5'd0;
+        flags.denormal = 1'd1;
+        cfloat152.mantissa = 2'b01;
       end
       else if (rg_fp32.exponent == exponent_underflow_limit - 8'd3) begin
         cfloat152.exponent = 5'd0;
@@ -117,7 +133,11 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
       end
       else if (rg_fp32.exponent == exponent_underflow_limit - 8'd1) begin
         cfloat152.exponent = 5'd0;
-        if (rg_fp32.mantissa[22:21] == 2'b00 || rg_fp32.mantissa[22:21] == 2'b01) begin
+        if (rg_fp32.mantissa[22:21] == 2'b00 ) begin
+          flags.denormal = 1'd1;
+          cfloat152.mantissa = 2'b11;
+        end
+        else if (rg_fp32.mantissa[22:21] == 2'b01 && (rg_fp32.mantissa[20]) == 1'b0) begin
           flags.denormal = 1'd1;
           cfloat152.mantissa = 2'b11;
         end
@@ -133,6 +153,9 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
      * 
      */
     else begin
+    `ifdef verbose
+      $display($time,"Normal %d",flags.overflow);
+    `endif
       cfloat152.exponent = truncate(rg_fp32.exponent - 8'd127 + zeroExtend(rg_bias));
       Bit#(7) temp = {cfloat152.exponent,rg_fp32.mantissa[22:21]};
       if (rg_fp32.mantissa[20] == 1'b1) begin
@@ -148,9 +171,11 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
                                  exponent : cfloat152.exponent,
                                  mantissa : cfloat152.mantissa};
  
-    rg_flags <= CFLOAT_FLAGS_t {zero     : flags.zero,
-                                invalid  : flags.invalid,
-                                overflow : flags.overflow};
+    rg_flags <= CFLOAT_FLAGS_t {zero        : flags.zero,
+                                invalid     : flags.invalid,
+                                overflow    : flags.overflow,
+                                underflow   : flags.underflow,
+                                denormal    : flags.denormal};
 
   endrule: rl_convert_fp32_cfloat152
  
@@ -189,13 +214,13 @@ endinterface: Ifc_cfloat152_fp32
 module mk_cfloat152_fp32(Ifc_cfloat152_fp32); 
   /* doc: reg: contains the fp32 representation */
   Reg#(FP32_t) rg_fp32 <- mkReg(FP32_t {sign     :0,
-					exponent :0,
-					mantissa :0});
+          exponent :0,
+          mantissa :0});
   
   /* doc: reg: contains the cfloat152 representation */
   Reg#(CFLOAT152_t) rg_cfloat152 <- mkReg(CFLOAT152_t {sign     :0,
-						       exponent :0,
-						       mantissa :0});
+                   exponent :0,
+                   mantissa :0});
   
   /* doc: reg: contains the configurable bias */
   Reg#(Bit#(6)) rg_bias <- mkReg(0);
