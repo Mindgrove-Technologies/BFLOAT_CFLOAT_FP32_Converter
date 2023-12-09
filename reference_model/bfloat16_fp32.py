@@ -1,6 +1,43 @@
 import torch
 
 
+# Python program to convert
+# IEEE 754 floating point representation
+# into real value
+
+# Function to convert Binary
+# of Mantissa to float value.
+def convertToInt(mantissa_str):
+
+	# variable to make a count
+	# of negative power of 2.
+	power_count = -1
+
+	# variable to store
+	# float value of mantissa.
+	mantissa_int = 0
+
+	# Iterations through binary
+	# Number. Standard form of 
+	# Mantissa is 1.M so we have 
+	# 0.M therefore we are taking
+	# negative powers on 2 for 
+	# conversion.
+	for i in mantissa_str:
+
+		# Adding converted value of
+		# Binary bits in every 
+		# iteration to float mantissa.
+		mantissa_int += (int(i) * pow(2, power_count))
+
+		# count will decrease by 1
+		# as we move toward right.
+		power_count -= 1
+		
+	# returning mantissa in 1.M form.
+	return (mantissa_int + 1)
+
+
 # Function for converting decimal to binary
 def float_bin(my_number, places = 3): 
 	my_whole, my_dec = str(my_number).split(".")
@@ -56,23 +93,100 @@ def IEEE754(n) :
 	# hstr = '0x%0*X' %((len(final) + 3) // 4, int(final, 2)) 
 	return (final)
 
+
+def convert_ieee_to_real(fp32_binary):
+	# Floating Point Representation
+	# to be converted into real 
+	# value.
+	ieee_32 = fp32_binary
+
+	# First bit will be sign bit.
+	sign_bit = int(ieee_32[0])
+
+	# Next 8 bits will be 
+	# Exponent Bits in Biased
+	# form.
+	exponent_bias = int(ieee_32[1 : 9], 2)
+
+	# In 32 Bit format bias
+	# value is 127 so to have
+	# unbiased exponent
+	# subtract 127.
+	exponent_unbias = exponent_bias - 127
+
+	# Next 23 Bits will be
+	# Mantissa (1.M format)
+	mantissa_str = ieee_32[9 : ]
+
+	# Function call to convert
+	# 23 binary bits into 
+	# 1.M real no. form
+	mantissa_int = convertToInt(mantissa_str)
+
+	# The final real no. obtained
+	# by sign bit, mantissa and
+	# Exponent.
+	real_no = pow(-1, sign_bit) * mantissa_int * pow(2, exponent_unbias)
+
+	# Printing the obtained
+	# Real value of floating
+	# Point Representation.
+	print("The float value of the given IEEE-754 representation is :",real_no)
+
+	return real_no
+
+
 def convert_bfloat16_fp32(bfloat_in):
 
-	fp32_val = bfloat_in.float()
-	fp32_list = fp32_val.tolist()
+
+	inf = 3.3895313892515355e+38
+	neg_inf = -3.3895313892515355e+38
+	qnan = 5.130820063729775e+38
+	nqnan = -5.130820063729775e+38
+	snan = 3.429408229125083e+38
+	nsnan = -3.429408229125083e+38
+	underflow = 5.900429927501703e-39
+	neg_underflow = -5.900429927501703e-39
+
+	if (bfloat_in != qnan and bfloat_in != snan and bfloat_in != nqnan and bfloat_in != nsnan):
+		fp32_val = bfloat_in.float()
+		fp32_list = fp32_val.tolist()
 
 	float_list_binary = []
 
 	# print("BFLOAT Val:")
-	print(fp32_list)
+	# print(fp32_list)
 	for i in range(1):
-		if (fp32_list == 0.0):
-			fp32_binary = "0"*32
+		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in != inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in != neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
+			if (fp32_list == 0.0):
+				fp32_binary_temp = "0"*32
+			else:
+				fp32_binary_temp = IEEE754(fp32_list)
+		elif(bfloat_in == inf):
+			fp32_binary_temp = "01111111100000000000000000000000"
+		elif(bfloat_in == neg_inf):
+			fp32_binary_temp = "11111111100000000000000000000000"
+		elif(bfloat_in == qnan):
+			fp32_binary_temp = "01111111110000000000000000000001"
+		elif(bfloat_in == snan):
+			fp32_binary_temp = "01111111100000000000000000000001"
+		elif(bfloat_in == nqnan):
+			fp32_binary_temp = "11111111110000000000000000000001"
+		elif(bfloat_in == nsnan):
+			fp32_binary_temp = "11111111100000000000000000000001"
+		elif(bfloat_in <= underflow and bfloat_in > neg_underflow):
+			fp32_binary_temp = "00000000000000000000000000000000"
+		elif(bfloat_in <= neg_underflow):
+			fp32_binary_temp = "10000000000000000000000000000000"
 		else:
 			# fp32_binary = IEEE754(fp32_list)
 			fp32_binary_temp = IEEE754(fp32_list)
-			fp32_binary = fp32_binary_temp[0:16]+"0"*16
 		
+		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in != inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in != neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
+			fp32_binary = fp32_binary_temp[0:16]+"0"*16
+		else:
+			fp32_binary = fp32_binary_temp
+
 		float_list_binary.append(fp32_binary)
 
 	# print("FP32 Binaries are: ")

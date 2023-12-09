@@ -178,11 +178,15 @@ async def negative_numbers_test(dut):
 async def overflow_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
-	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*193*199999999999
+	elemns = 1
+	
+	bfloat_bin = '0111111101111111'
+
+	bfloat_inp = b_f.convert_ieee_to_real(bfloat_bin+"0"*16)
+	bfloat_inp = bfloat_inp + torch.Tensor([0])
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
-	
+		
 	bfloat_list = bfloat_inp.tolist()
 	bfloat_list_binary = []
 	
@@ -197,7 +201,7 @@ async def overflow_numbers_test(dut):
 
 	for i in range(elemns):
 		await tb.cycle_reset()
-		await tb.input_bfloat(bfloat_list_binary[i])
+		await tb.input_bfloat(bfloat_bin)
 		temp = bfloat_inp[i]
 		output_rm = await tb.model(temp)
 		output_dut = await tb.get_float()
@@ -238,127 +242,6 @@ async def underflow_numbers_test(dut):
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
 		await tb.cycle_wait(5)
 		await tb.cycle_reset()
-
-
-@cocotb.test()
-async def qnan_test(dut):
-	tb=TB(dut)
-
-	elemns = 1
-
-	bfloat_bin = '0111111111000001'
-
-	bfloat_inp = b_f.convert_ieee_to_real(bfloat_bin)
-
-	print(bfloat_inp)
-	
-	bfloat_list_binary = []
-	
-	for i in range(elemns):
-		bfloat_list_binary.append(bfloat_bin)
-		
-	print(bfloat_list_binary)
-
-	for i in range(elemns):
-		await tb.cycle_reset()
-		await tb.input_bfloat(bfloat_list_binary[i])
-		output_rm = await tb.model(bfloat_inp)
-		output_dut = await tb.get_float()
-
-		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
-		await tb.cycle_wait(5)
-		await tb.cycle_reset()
-
-
-@cocotb.test()
-async def snan_test(dut):
-	tb=TB(dut)
-
-	elemns = 1
-
-	bfloat_bin = '0111111110000001'
-
-	bfloat_inp = b_f.convert_ieee_to_real(bfloat_bin)
-	print(bfloat_inp)
-	
-	bfloat_list_binary = []
-	
-	for i in range(elemns):
-		bfloat_list_binary.append(bfloat_bin)
-		
-	print(bfloat_list_binary)
-
-	for i in range(elemns):
-		await tb.cycle_reset()
-		await tb.input_bfloat(bfloat_list_binary[i])
-		temp = bfloat_inp
-		output_rm = await tb.model(temp)
-		output_dut = await tb.get_float()
-
-		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
-		await tb.cycle_wait(5)
-		await tb.cycle_reset()
-
-
-@cocotb.test()
-async def negative_qnan_test(dut):
-	tb=TB(dut)
-
-	elemns = 1
-
-	bfloat_bin = '1111111111000001'
-
-	bfloat_inp = b_f.convert_ieee_to_real(bfloat_bin)
-
-	print(bfloat_inp)
-	
-	bfloat_list_binary = []
-	
-	for i in range(elemns):
-		bfloat_list_binary.append(bfloat_bin)
-		
-	print(bfloat_list_binary)
-
-	for i in range(elemns):
-		await tb.cycle_reset()
-		await tb.input_bfloat(bfloat_list_binary[i])
-		output_rm = await tb.model(bfloat_inp)
-		output_dut = await tb.get_float()
-
-		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
-		await tb.cycle_wait(5)
-		await tb.cycle_reset()
-
-
-@cocotb.test()
-async def negative_snan_test(dut):
-	tb=TB(dut)
-
-	elemns = 1
-
-	bfloat_bin = '1111111110000001'
-
-	bfloat_inp = b_f.convert_ieee_to_real(bfloat_bin)
-	print(bfloat_inp)
-	
-	bfloat_list_binary = []
-	
-	for i in range(elemns):
-		bfloat_list_binary.append(bfloat_bin)
-		
-	print(bfloat_list_binary)
-
-	for i in range(elemns):
-		await tb.cycle_reset()
-		await tb.input_bfloat(bfloat_list_binary[i])
-		temp = bfloat_inp
-		output_rm = await tb.model(temp)
-		output_dut = await tb.get_float()
-
-		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
-		await tb.cycle_wait(5)
-		await tb.cycle_reset()
-
 
 
 @cocotb.test()
