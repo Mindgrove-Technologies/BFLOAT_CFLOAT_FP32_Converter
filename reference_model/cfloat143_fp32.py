@@ -25,8 +25,8 @@ def convert_cfloat143_fp32(cfloat143_in,bias,neg_zero):
     dict_d     = {}
     CHECK_RES  = False
     sign = 0
-    if(cfloat152_in < 0):
-        cfloat152_in = -cfloat152_in
+    if(cfloat143_in < 0):
+        cfloat143_in = -cfloat143_in
         sign = 1
     ####################
     logging.info("Checking if the given cfloat number is a valid")
@@ -86,7 +86,7 @@ def convert_cfloat143_fp32(cfloat143_in,bias,neg_zero):
         else:
             continue
 
-    if (cfloat152_in == 0.0):
+    if (cfloat143_in == 0.0):
         CHECK_RES = True
 
 
@@ -94,13 +94,13 @@ def convert_cfloat143_fp32(cfloat143_in,bias,neg_zero):
         # print(f"ANS = {cfloat143_in}")
         logging.info("The given cfloat is a valid number")
     else:
-        logging.error("The given cfloat number is not a valid input")
+        logging.error(f"The given cfloat number is not a valid input {cfloat143_in}")
      
     if (sign == 1):
-        cfloat152_in = -cfloat152_in
+        cfloat143_in = -cfloat143_in
         
     if (CHECK_RES and not neg_zero):
-        bin_fp32 = fp32_bin(cfloat152_in)
+        bin_fp32 = fp32_bin(cfloat143_in)
         return bin_fp32
     elif (CHECK_RES and neg_zero):
         bin_fp32 = fp32_bin(-0.0)
@@ -113,4 +113,4 @@ def main():
 
     print(convert_cfloat143_fp32(cfloat_in,bias))
 
-main()
+# main()
