@@ -174,6 +174,298 @@ async def negative_numbers_test(dut):
 		await tb.cycle_wait(5)
 		await tb.cycle_reset()
 
+
+@cocotb.test()
+async def overflow_numbers_test(dut):
+	tb=TB(dut)
+
+	elemns = 1
+	# fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*953*19999999999
+
+	fp32_bin = '01111111011111111111111111111111'
+
+	fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+	fp32_inp = fp32_inp + torch.Tensor([0])
+	fp32_inp.to(torch.float32)
+
+	fp32_input = fp32_inp.float()
+	print(fp32_input)
+	
+	float_list = fp32_inp.tolist()
+	float_list_binary = []
+	
+		# print(float_list)
+	for i in range(elemns):
+		fp32_binary = f_b.IEEE754(float_list[i])
+		float_list_binary.append(fp32_bin)
+		
+	# print(fp32_binary)
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_input
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
+@cocotb.test()
+async def underflow_numbers_test(dut):
+	tb=TB(dut)
+
+	start_bin = '00000000000000000000000000000001'
+	end_bin = '00000000000000000111111111111111'
+
+	start_dec = int(start_bin, 2)  # Convert binary string to decimal
+	end_dec = int(end_bin, 2)  # Convert binary string to decimal
+
+	float_list_binary = []
+	count = 0
+
+	# Iterate through the range of decimal numbers and print their binary equivalents
+	for i in range(start_dec, end_dec + 1):
+		binary = format(i, '032b')  # Convert decimal to 32-bit binary string
+		# print(binary)
+		fp32_bin = binary		
+		fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+		fp32_inp = fp32_inp + torch.Tensor([0])
+		fp32_inp.to(torch.float32)
+		float_list_binary.append(fp32_bin)
+		count = count + 1
+
+	# elemns = count
+	elemns = 1
+
+	fp32_input = fp32_inp.float()
+	# print(fp32_input)
+	
+	float_list = fp32_inp.tolist()
+		
+	# print(fp32_binary)
+	# print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_inp
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+@cocotb.test()
+async def negative_overflow_numbers_test(dut):
+	tb=TB(dut)
+
+	elemns = 1
+	# fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*953*19999999999
+
+	fp32_bin = '11111111011111111111111111111111'
+
+	fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+	fp32_inp = fp32_inp + torch.Tensor([0])
+	fp32_inp.to(torch.float32)
+
+	fp32_input = fp32_inp.float()
+	print(fp32_input)
+	
+	float_list = fp32_input.tolist()
+	float_list_binary = []
+	
+		# print(float_list)
+	for i in range(elemns):
+		fp32_binary = f_b.IEEE754(float_list[i])
+		float_list_binary.append(fp32_bin)
+		
+	# print(fp32_binary)
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_inp[i]
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
+@cocotb.test()
+async def negative_underflow_numbers_test(dut):
+	tb=TB(dut)
+
+	start_bin = '10000000000000000000000000000001'
+	end_bin = '10000000000000000111111111111111'
+
+	start_dec = int(start_bin, 2)  # Convert binary string to decimal
+	end_dec = int(end_bin, 2)  # Convert binary string to decimal
+
+	float_list_binary = []
+	count = 0
+
+	# Iterate through the range of decimal numbers and print their binary equivalents
+	for i in range(start_dec, end_dec + 1):
+		binary = format(i, '032b')  # Convert decimal to 32-bit binary string
+		# print(binary)
+		fp32_bin = binary		
+		fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+		fp32_inp = fp32_inp + torch.Tensor([0])
+		fp32_inp.to(torch.float32)
+		float_list_binary.append(fp32_bin)
+		count = count + 1
+
+	# elemns = count
+	elemns = 1
+
+	fp32_input = fp32_inp.float()
+	print(fp32_input)
+	
+	float_list = fp32_inp.tolist()
+		
+	# print(fp32_binary)
+	# print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_input[i]
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
+@cocotb.test()
+async def qnan_test(dut):
+	tb=TB(dut)
+
+	elemns = 1
+
+	fp32_bin = '01111111110000000000000000000001'
+
+	fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+
+	print(fp32_inp)
+	
+	float_list_binary = []
+	
+	for i in range(elemns):
+		float_list_binary.append(fp32_bin)
+		
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		output_rm = await tb.model(fp32_inp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
+@cocotb.test()
+async def snan_test(dut):
+	tb=TB(dut)
+
+	elemns = 1
+
+	fp32_bin = '01111111100000000000000000000001'
+
+	fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+	print(fp32_inp)
+	
+	float_list_binary = []
+	
+	for i in range(elemns):
+		float_list_binary.append(fp32_bin)
+		
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_inp
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
+@cocotb.test()
+async def negative_qnan_test(dut):
+	tb=TB(dut)
+
+	elemns = 1
+
+	fp32_bin = '11111111110000000000000000000001'
+
+	fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+
+	print(fp32_inp)
+	
+	float_list_binary = []
+	
+	for i in range(elemns):
+		float_list_binary.append(fp32_bin)
+		
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		output_rm = await tb.model(fp32_inp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
+@cocotb.test()
+async def negative_snan_test(dut):
+	tb=TB(dut)
+
+	elemns = 1
+
+	fp32_bin = '11111111100000000000000000000001'
+
+	fp32_inp = f_b.convert_ieee_to_real(fp32_bin)
+	print(fp32_inp)
+	
+	float_list_binary = []
+	
+	for i in range(elemns):
+		float_list_binary.append(fp32_bin)
+		
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_inp
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
 @cocotb.test()
 async def zero_test(dut):
 	tb=TB(dut)

@@ -107,10 +107,16 @@ if __name__ == "__main__" :
 		fp32_binary = IEEE754(float_list[i])
 		print (fp32_binary)
 
+	num = 0.0000655895346426405012607574462890625
+
+	bin = IEEE754(num)
+	print("BINARY:")
+	print(bin)
+
 	# Floating Point Representation
 	# to be converted into real 
 	# value.
-	ieee_32 = fp32_binary
+	ieee_32 = bin
 
 	# First bit will be sign bit.
 	sign_bit = int(ieee_32[0])

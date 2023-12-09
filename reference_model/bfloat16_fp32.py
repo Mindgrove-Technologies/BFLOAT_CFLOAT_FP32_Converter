@@ -63,7 +63,7 @@ def convert_bfloat16_fp32(bfloat_in):
 
 	float_list_binary = []
 
-	print("FP32 Val:")
+	# print("BFLOAT Val:")
 	print(fp32_list)
 	for i in range(1):
 		if (fp32_list == 0.0):
