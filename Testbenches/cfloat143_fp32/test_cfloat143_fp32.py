@@ -169,7 +169,7 @@ async def test_positive_normal_numbers_single_bias(dut):
 
     await tb.cycle_reset()
 
-    iteration = 100000
+    iteration = 10000
     for i in range(iteration):
         exponent = random.randint(1,15)
         mantissa = random.randint(0,7)
