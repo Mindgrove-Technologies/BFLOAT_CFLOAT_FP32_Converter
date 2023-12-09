@@ -1,5 +1,6 @@
 import torch
 
+
 # Python program to convert
 # IEEE 754 floating point representation
 # into real value
@@ -93,30 +94,11 @@ def IEEE754(n) :
 	return (final)
 
 
-# Driver Code
-if __name__ == "__main__" :
-	elemns = 10
-	a = torch.rand(elemns, dtype=torch.float32)
-	b = a.float()
-	c = b.bfloat16()
-	# print(f"got {(c>a).sum()} elements rounded up out of {elemns}")
-	# print(c,a)
-	float_list = b.tolist()
-	print(float_list)
-	for i in range(elemns):
-		fp32_binary = IEEE754(float_list[i])
-		print (fp32_binary)
-
-	num = 0.0000655895346426405012607574462890625
-
-	bin = IEEE754(num)
-	print("BINARY:")
-	print(bin)
-
+def convert_ieee_to_real(fp32_binary):
 	# Floating Point Representation
 	# to be converted into real 
 	# value.
-	ieee_32 = bin
+	ieee_32 = fp32_binary
 
 	# First bit will be sign bit.
 	sign_bit = int(ieee_32[0])
@@ -150,3 +132,64 @@ if __name__ == "__main__" :
 	# Real value of floating
 	# Point Representation.
 	print("The float value of the given IEEE-754 representation is :",real_no)
+
+	return real_no
+
+
+def convert_bfloat16_fp32(bfloat_in):
+
+
+	inf = 3.3895313892515355e+38
+	neg_inf = -3.3895313892515355e+38
+	qnan = 5.130820063729775e+38
+	nqnan = -5.130820063729775e+38
+	snan = 3.429408229125083e+38
+	nsnan = -3.429408229125083e+38
+	underflow = 5.900429927501703e-39
+	neg_underflow = -5.900429927501703e-39
+
+	if (bfloat_in != qnan and bfloat_in != snan and bfloat_in != nqnan and bfloat_in != nsnan):
+		fp32_val = bfloat_in.float()
+		fp32_list = fp32_val.tolist()
+
+	float_list_binary = []
+
+	# print("BFLOAT Val:")
+	# print(fp32_list)
+	for i in range(1):
+		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in != inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in != neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
+			if (fp32_list == 0.0):
+				fp32_binary_temp = "0"*32
+			else:
+				fp32_binary_temp = IEEE754(fp32_list)
+		elif(bfloat_in == inf):
+			fp32_binary_temp = "01111111100000000000000000000000"
+		elif(bfloat_in == neg_inf):
+			fp32_binary_temp = "11111111100000000000000000000000"
+		elif(bfloat_in == qnan):
+			fp32_binary_temp = "01111111110000000000000000000001"
+		elif(bfloat_in == snan):
+			fp32_binary_temp = "01111111100000000000000000000001"
+		elif(bfloat_in == nqnan):
+			fp32_binary_temp = "11111111110000000000000000000001"
+		elif(bfloat_in == nsnan):
+			fp32_binary_temp = "11111111100000000000000000000001"
+		elif(bfloat_in <= underflow and bfloat_in > neg_underflow):
+			fp32_binary_temp = "00000000000000000000000000000000"
+		elif(bfloat_in <= neg_underflow):
+			fp32_binary_temp = "10000000000000000000000000000000"
+		else:
+			# fp32_binary = IEEE754(fp32_list)
+			fp32_binary_temp = IEEE754(fp32_list)
+		
+		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in != inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in != neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
+			fp32_binary = fp32_binary_temp[0:16]+"0"*16
+		else:
+			fp32_binary = fp32_binary_temp
+
+		float_list_binary.append(fp32_binary)
+
+	# print("FP32 Binaries are: ")
+	# print(float_list_binary)
+
+	return float_list_binary[0]
