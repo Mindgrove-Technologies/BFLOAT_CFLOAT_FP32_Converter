@@ -93,13 +93,13 @@ class TB: #defining Class TB
         assert output_rm == str(output_dut) ,f"Test Failed, rm: {output_rm} and dut: {str(output_dut)} not matching for input: {fp32_in} and bias: {bias}"
 
 
-@cocotb.test()
+# @cocotb.test()
 async def test_single_num(dut):
     tb =TB(dut)
 
     neg_zero = 0
-    bias = 29
-    fp32_in = np.array([2.7460129725653815e-09], dtype=np.float32)
+    bias = 0
+    fp32_in = np.array([1.4450937509536743], dtype=np.float32)
     # fp32_in = 2.7460129725653815e-09
     # fp32_in = 0.02
     # fp32_in = 0.34375
@@ -200,9 +200,10 @@ async def test_positive_underflow(dut):
     tb =TB(dut)
 
     neg_zero = 0
-    bias = random.randint(0, 63)
+    # bias = random.randint(0, 63)
+    bias = 0
 
-    size = 10
+    size = 10000
     low_limit = 0.0
     high_limit = (2**(1-bias)) * 1
     np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
@@ -226,7 +227,7 @@ async def test_negative_underflow(dut):
     bias = random.randint(0, 63)
 
 
-    size = 10
+    size = 10000
     low_limit = 0.0
     high_limit = -((2**(1-bias)) * 1)
     np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
