@@ -69,10 +69,11 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
             $display("Exponent Underflow Limit: %d", exponent_underflow_limit);
         `endif
 
-        CFLOAT_FLAGS_t lv_flags = CFLOAT_FLAGS_t {    zero      : pack((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)),
+        CFLOAT_FLAGS_t lv_flags = CFLOAT_FLAGS_t {    
+                                        zero      : pack(((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)) || (rg_fp32.exponent < exponent_underflow_limit - 8'd5)),
                                         invalid   : pack((&rg_fp32.exponent == 1'b1)),
                                         denormal  : 1'b0,
-                                        overflow  : pack((rg_fp32.exponent > exponent_overflow_limit) && (rg_fp32.mantissa[22:20] == 3'b111)),
+                                        overflow  : pack((rg_fp32.exponent > exponent_overflow_limit) || ((rg_fp32.mantissa[22:20] == 3'b111) && (rg_fp32.exponent == exponent_overflow_limit))),
                                         underflow : pack(rg_fp32.exponent < exponent_underflow_limit)
                                     };
 
@@ -212,6 +213,7 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
 endmodule: mk_fp32_cfloat143
 
 // Module to convert Tesla's CFLOAT8_143 to IEEE-754 FP32.
+(* synthesize *)
 module mk_cfloat143_fp32(Ifc_fpu_convert_cfloat143_fp32);
 
     // Register Declarations
