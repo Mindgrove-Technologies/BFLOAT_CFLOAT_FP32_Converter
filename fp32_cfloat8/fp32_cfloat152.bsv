@@ -73,7 +73,9 @@ module mk_fp32_cfloat152(Ifc_fp32_cfloat152);
     flags.zero      = pack(((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)) || (rg_fp32.exponent < exponent_underflow_limit - 8'd4) );
     flags.invalid   = pack((&rg_fp32.exponent == 1'b1));
     flags.overflow  = pack(((rg_fp32.exponent == exponent_overflow_limit) 
-                       && (rg_fp32.mantissa[22:21] == 2'b11)) || rg_fp32.exponent > exponent_overflow_limit);
+                       && (rg_fp32.mantissa[22:21] == 2'b11) 
+                       && |rg_fp32.mantissa[20:0] == 1'b1) 
+                       || rg_fp32.exponent > exponent_overflow_limit);
     flags.underflow = pack(rg_fp32.exponent < exponent_underflow_limit); 
     flags.denormal = 1'd0;
 
@@ -247,12 +249,18 @@ module mk_cfloat152_fp32(Ifc_cfloat152_fp32);
     /* Zero */
     fp32.sign = rg_cfloat152.sign;
     if (|rg_cfloat152.exponent == 1'b0 && |rg_cfloat152.mantissa == 1'b0) begin
+    `ifdef verbose
+      $display ( "Zero" );
+    `endif
       fp32.exponent = 8'd0;
       fp32.mantissa = 23'd0;
       fp32_flags.zero = 1'b1;
     end
     /* cfloat Denormal Numbers */
     else if (|rg_cfloat152.exponent == 1'b0 && |rg_cfloat152.mantissa != 1'b0) begin
+    `ifdef verbose
+      $display ( "Denormal" );
+    `endif
       fp32.mantissa  = 23'd0;
       if (rg_cfloat152.mantissa == 2'b01)
         fp32.exponent = 8'd128 - 8'd3 - zeroExtend(rg_bias);
@@ -265,6 +273,9 @@ module mk_cfloat152_fp32(Ifc_cfloat152_fp32);
     end
     /* Normal Numbers */
     else begin
+    `ifdef verbose
+      $display ( "Normal" );
+    `endif
       fp32.mantissa[22:21] = rg_cfloat152.mantissa;
       fp32.exponent        = zeroExtend(rg_cfloat152.exponent) - zeroExtend(rg_bias) + 8'd127;
     end

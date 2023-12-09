@@ -20,19 +20,27 @@ import numpy as np
 import struct
 
 sys.path.append("../../reference_model/")
-import cfloat152_fp32 as fp_c
+import cfloat143_fp32 as fp_c
 
-def conv_cfloat_to_binary(sign,exponent,mantissa):
+def conv_cfloat_to_binary(sign,exponent, mantissa):
     bin_sign = str(sign)
-    bin_exponent = bin(exponent)[2:].zfill(5)
+    bin_exponent = bin(exponent)[2:].zfill(4)
     if (mantissa == 0):
-        bin_mantissa = "00"
+        bin_mantissa = "000"
     elif (mantissa == 1):
-        bin_mantissa = "01"
+        bin_mantissa = "001"
     elif (mantissa == 2):
-        bin_mantissa = "10"
+        bin_mantissa = "010"
+    elif (mantissa == 3):
+        bin_mantissa = "011"
+    elif (mantissa == 4):
+        bin_mantissa = "100"
+    elif (mantissa == 5):
+        bin_mantissa = "101"
+    elif (mantissa == 6):
+        bin_mantissa = "110"
     else:
-        bin_mantissa = "11"
+        bin_mantissa = "111"
 
     bin_cfloat = bin_sign + bin_exponent + bin_mantissa
     return bin_cfloat
@@ -43,19 +51,35 @@ def generate_cfloat_num (sign, exponent, mantissa,bias):
         if mantissa == 0:
             return value * 1
         elif mantissa == 1:
-            return value * 1.25
+            return value * 1.125
         elif mantissa == 2:
+            return value * 1.25
+        elif mantissa == 3:
+            return value * 1.375
+        elif mantissa == 4:
             return value * 1.5
-        else:
+        elif mantissa == 5:
+            return value * 1.625
+        elif mantissa == 6:
             return value * 1.75
+        else:
+            return value * 1.875
     else:
         value = 2 ** (-bias) * ((-1) ** sign)
         if mantissa == 1:
-            return value * 0.25
+            return value * 0.125
         elif mantissa == 2:
-            return value * 0.5
+            return value * 0.25
+        elif mantissa == 3:
+            return value * 0.375
+        elif mantissa == 4:
+            return value * 0.500
+        elif mantissa == 5:
+            return value * 0.625
+        elif mantissa == 6:
+            return value * 0.750
         else:
-            return value * 0.75
+            return value * 0.875
 
 class TB: #defining Class TB 
     def __init__(self,dut):
@@ -79,8 +103,8 @@ class TB: #defining Class TB
 
     async def input_dut (self,cfloat_in,bias):
         self.dut._log.debug("Providing input \n")
-        self.dut.cfloat152_in_cfloat_in.value = int(cfloat_in,2)
-        self.dut.bias_in_bias.value  = bias 
+        self.dut.convert_cfloat143_fp32_cfloat143_in.value = int(cfloat_in,2)
+        self.dut.convert_cfloat143_fp32_bias.value  = bias 
         await RisingEdge(self.dut.CLK) 
 
     
@@ -88,11 +112,11 @@ class TB: #defining Class TB
         await RisingEdge(self.dut.CLK)
         await RisingEdge(self.dut.CLK)
         self.dut._log.debug("Probing output\n")
-        dut_output = self.dut.fp32_out.value
+        dut_output = self.dut.get_fp32.value
         return dut_output
 
     async def reference_model (self,cfloat_in,bias,neg_zero):
-        output_rm = fp_c.convert_cfloat152_fp32(cfloat_in,bias,neg_zero)
+        output_rm = fp_c.convert_cfloat143_fp32(cfloat_in,bias,neg_zero)
         return output_rm
     
 
@@ -147,9 +171,10 @@ async def test_positive_normal_numbers_single_bias(dut):
 
     iteration = 10000
     for i in range(iteration):
-        exponent = random.randint(1,31)
-        mantissa = random.randint(0,3)
+        exponent = random.randint(1,15)
+        mantissa = random.randint(0,7)
         bias = random.randint(0,63)
+
     
         tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
         cfloat_in = generate_cfloat_num(sign, exponent, mantissa, bias)
@@ -172,10 +197,10 @@ async def test_negative_normal_numbers_single_bias(dut):
 
     iteration = 10000
     for i in range(iteration):
-        exponent = random.randint(1,31)
-        mantissa = random.randint(0,3)
+        exponent = random.randint(1,15)
+        mantissa = random.randint(0,7)
         bias = random.randint(0,63)
-    
+
         tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
         cfloat_in = generate_cfloat_num(sign, exponent, mantissa, bias)
         # print(cfloat_in)
@@ -198,9 +223,9 @@ async def test_positive_denormal_numbers_single_bias(dut):
     neg_zero = 0
 
     await tb.cycle_reset()
-    # bias = random.randint(0,63)
+    # bias = random.randint(0,63
     for bias in range(0,64):
-        for mantissa in range(1,4):
+        for mantissa in range(1,8):
             # bias = 1
         
             tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
@@ -226,7 +251,7 @@ async def test_negative_denormal_numbers_single_bias(dut):
     await tb.cycle_reset()
     # bias = random.randint(0,63)
     for bias in range(0,64):
-        for mantissa in range(1,4):
+        for mantissa in range(1,8):
         
             tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
             cfloat_in = generate_cfloat_num(sign, exponent, mantissa, bias)
