@@ -56,15 +56,6 @@ def IEEE754(n) :
 	# hstr = '0x%0*X' %((len(final) + 3) // 4, int(final, 2)) 
 	return (final)
 
-
-# Driver Code
-if __name__ == "__main__" :
-	elemns = 1
-	a = torch.rand(elemns, dtype=torch.float32)
-	b = a.bfloat16()
-	c = b.float()
-
-
 def convert_bfloat16_fp32(bfloat_in):
 
 	fp32_val = bfloat_in.float()
