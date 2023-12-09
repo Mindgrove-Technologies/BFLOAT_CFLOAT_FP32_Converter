@@ -63,29 +63,21 @@ if __name__ == "__main__" :
 	a = torch.rand(elemns, dtype=torch.float32)
 	b = a.bfloat16()
 	c = b.float()
-	
-	bfloat_list = b.tolist()
 
-	bfloat_list_binary = []
 
-	# print(bfloat_list)
-	for i in range(elemns):
-		bfloat_binary_temp = IEEE754(bfloat_list[i])
-		bfloat_binary = bfloat_binary_temp[0:16]
-		bfloat_list_binary.append(bfloat_binary)
-		# print (bfloat_binary)
+def convert_bfloat16_fp32(bfloat_in):
 
-	print("BFLOAT16 Binaries are: ")
-	print(bfloat_list_binary)
+	fp32_val = bfloat_in.float()
+	fp32_list = bfloat_in.tolist()
 
-	float_list = c.tolist()
 	float_list_binary = []
 
-	# print(float_list)
-	for i in range(elemns):
-		fp32_binary = IEEE754(float_list[i])
-		float_list_binary.append(IEEE754(float_list[i]))
-		# print (fp32_binary)
-		
-	print("FP32 Binaries are: ")
-	print(float_list_binary)
+	print(fp32_list)
+	for i in range(1):
+		fp32_binary = IEEE754(fp32_list)
+		float_list_binary.append(fp32_binary)
+
+	# print("FP32 Binaries are: ")
+	# print(float_list_binary)
+
+	return float_list_binary[0]

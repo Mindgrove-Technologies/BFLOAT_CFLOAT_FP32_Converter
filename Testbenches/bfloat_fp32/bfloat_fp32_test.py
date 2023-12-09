@@ -1,7 +1,7 @@
 import torch
 import sys
 sys.path.append('../../reference_model')
-import fp32_bfloat16 as f_b
+import bfloat16_fp32 as b_f
 
 from pydoc import allmethods
 import sys
@@ -43,15 +43,15 @@ class TB: #defining Class TB
 			await RisingEdge(self.dut.CLK)
 
 #function to initialize the inputs to mme
-	async def input_fp32 (self,fp32_input): 
+	async def input_bfloat (self,bfloat_input): 
 		await RisingEdge(self.dut.CLK)
-		self.dut.fp32_in_fp_in.value = int(fp32_input,2)
+		self.dut.bfloat16_in_bfloat_in.value = int(bfloat_input,2)
 
-	async def get_bfloat (self): 
+	async def get_float (self): 
 		await RisingEdge(self.dut.CLK)
 		await RisingEdge(self.dut.CLK)
 		await RisingEdge(self.dut.CLK)
-		bfloat_output = self.dut.bfloat16_out.value
+		bfloat_output = self.dut.fp32_out.value
 		await RisingEdge(self.dut.CLK)
 		await RisingEdge(self.dut.CLK)
 
@@ -59,9 +59,9 @@ class TB: #defining Class TB
 
 
 #Reference model with only encryption 
-	async def model (self,fp32_input):
-		bfloat_value = f_b.convert_fp32_bfloat16(fp32_input)
-		return bfloat_value
+	async def model (self,bfloat_input):
+		float_value = b_f.convert_bfloat16_fp32(bfloat_input)
+		return float_value
 
 
 	def compare(self,input,output_dut,output_rm): #function to compare the outputs recieved from Reference model and DUT
@@ -77,28 +77,29 @@ async def first_test(dut):
 	tb=TB(dut)
 
 	elemns = 1000
-	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7
-	fp32_input = fp32_inp.float()
-	print(fp32_input)
+	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7
+	bfloat_input = bfloat_inp.bfloat16()
+	print(bfloat_input)
 	
-	float_list = fp32_inp.tolist()
-	float_list_binary = []
+	bfloat_list = bfloat_inp.tolist()
+	bfloat_list_binary = []
 	
 		# print(float_list)
 	for i in range(elemns):
-		fp32_binary = f_b.IEEE754(float_list[i])
-		float_list_binary.append(f_b.IEEE754(float_list[i]))
+		bfloat_binary_temp = b_f.IEEE754(bfloat_list[i])
+		bfloat_binary = bfloat_binary_temp[0:16]
+		bfloat_list_binary.append(bfloat_binary)
 		
-	# print(fp32_binary)
-	print(float_list_binary)
+	# print(bfloat_binary)
+	print(bfloat_list_binary)
 
 	for i in range(elemns):
 		await tb.cycle_reset()
-		await tb.input_fp32(float_list_binary[i])
-		temp = fp32_inp[i]
+		await tb.input_bfloat(bfloat_list_binary[i])
+		temp = bfloat_inp[i]
 		output_rm = await tb.model(temp)
-		output_dut = await tb.get_bfloat()
+		output_dut = await tb.get_float()
 
-		tb.compare(float_list_binary[i],output_dut,output_rm)
+		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
 		await tb.cycle_wait(5)
 		await tb.cycle_reset()
