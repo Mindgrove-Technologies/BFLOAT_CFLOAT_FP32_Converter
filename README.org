@@ -60,13 +60,13 @@ If the given *input 32-bit number is lesser than smallest representable normal n
 
 The rounding mechanism deployed here round-to-nearest, which works in the following way. Assuming the given number is between two float number that are representable in cfloat binary space [for eg 2 , 2.5]. If the given number is greater than or equal ~(lesser_num + difference of two numbers/2)~ then the digits are round to be represent as the larger number else the number is represented as smaller number. This technique is the same for both positive , negative numbers (only the magnitude is taken for rounding computation) as well as the gradual underflow mechanism.
 
-#+begin_comment
+#+begin_center
 
 In the given example 2, 2.5
 if the input >= 2.25, then the rounded output will be 2.5
 if the input <  2.24, then the rounded output will be 2
 
-#+end_comment
+#+end_center
 
 *** Preserves the sign bit when coverting zeroes
 
