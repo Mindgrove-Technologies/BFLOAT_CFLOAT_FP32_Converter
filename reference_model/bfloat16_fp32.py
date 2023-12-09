@@ -59,13 +59,20 @@ def IEEE754(n) :
 def convert_bfloat16_fp32(bfloat_in):
 
 	fp32_val = bfloat_in.float()
-	fp32_list = bfloat_in.tolist()
+	fp32_list = fp32_val.tolist()
 
 	float_list_binary = []
 
+	print("FP32 Val:")
 	print(fp32_list)
 	for i in range(1):
-		fp32_binary = IEEE754(fp32_list)
+		if (fp32_list == 0.0):
+			fp32_binary = "0"*32
+		else:
+			# fp32_binary = IEEE754(fp32_list)
+			fp32_binary_temp = IEEE754(fp32_list)
+			fp32_binary = fp32_binary_temp[0:16]+"0"*16
+		
 		float_list_binary.append(fp32_binary)
 
 	# print("FP32 Binaries are: ")
