@@ -84,7 +84,9 @@ module mk_fp32_bfloat16(Ifc_fp32_bfloat16);
       else begin
         bfloat16.exponent = rg_fp32.exponent;
         Bit#(15) temp = {bfloat16.exponent,rg_fp32.mantissa[22:16]};
-        if (rg_fp32.mantissa[15] == 1'b1) begin
+        if(rg_fp32.mantissa[16] == 1'b0 && rg_fp32.mantissa[15] == 1'b1)
+          temp = temp;
+        else if (rg_fp32.mantissa[15] == 1'b1) begin
           temp = temp + 15'd1;
         end
         bfloat16.exponent = temp[14:7];
