@@ -114,7 +114,7 @@ async def custom_numbers_test(dut):
 async def normal_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
+	elemns = 100000
 	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*998
 
 	fp32_input = fp32_inp.float()
@@ -146,7 +146,7 @@ async def normal_numbers_test(dut):
 async def negative_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
+	elemns = 100000
 	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*953*(-1)
 
 	fp32_input = fp32_inp.float()
@@ -238,8 +238,8 @@ async def underflow_numbers_test(dut):
 		float_list_binary.append(fp32_bin)
 		count = count + 1
 
-	# elemns = count
-	elemns = 1
+	elemns = count
+	# elemns = 1
 
 	fp32_input = fp32_inp.float()
 	# print(fp32_input)
@@ -323,8 +323,8 @@ async def negative_underflow_numbers_test(dut):
 		float_list_binary.append(fp32_bin)
 		count = count + 1
 
-	# elemns = count
-	elemns = 1
+	elemns = count
+	# elemns = 1
 
 	fp32_input = fp32_inp.float()
 	print(fp32_input)
@@ -337,7 +337,7 @@ async def negative_underflow_numbers_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
-		temp = fp32_input[i]
+		temp = fp32_inp
 		output_rm = await tb.model(temp)
 		output_dut = await tb.get_bfloat()
 
@@ -470,7 +470,7 @@ async def negative_snan_test(dut):
 async def zero_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
+	elemns = 100000
 	fp32_inp = torch.rand(elemns, dtype=torch.float32)*0
 
 	fp32_input = fp32_inp.float()

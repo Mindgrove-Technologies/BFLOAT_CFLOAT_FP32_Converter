@@ -59,8 +59,8 @@ class TB: #defining Class TB
 
 
 #Reference model with only encryption 
-	async def model (self,bfloat_input):
-		float_value = b_f.convert_bfloat16_fp32(bfloat_input)
+	async def model (self,bfloat_input,neg_zero):
+		float_value = b_f.convert_bfloat16_fp32(bfloat_input,neg_zero)
 		return float_value
 
 
@@ -69,7 +69,7 @@ class TB: #defining Class TB
 		print ('Output_dut  ',output_dut)
 		print ('Output_rm   ', output_rm)
 		print('\n')
-		assert output_rm == str(output_dut) ,"Test Failed, rm and dut not matching"
+		assert (output_rm == str(output_dut)) ,"Test Failed, rm and dut not matching"
 
 # Driver Code
 @cocotb.test()
@@ -102,7 +102,7 @@ async def custom_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -113,7 +113,7 @@ async def custom_numbers_test(dut):
 async def normal_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
+	elemns = 100000
 	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*536
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
@@ -123,7 +123,7 @@ async def normal_numbers_test(dut):
 	
 		# print(float_list)
 	for i in range(elemns):
-		bfloat_binary_temp = b_f.IEEE754(bfloat_list[i])
+		bfloat_binary_temp = b_f.float_to_binary(bfloat_list[i])
 		bfloat_binary = bfloat_binary_temp[0:16]
 		bfloat_list_binary.append(bfloat_binary)
 		
@@ -134,7 +134,7 @@ async def normal_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -145,7 +145,7 @@ async def normal_numbers_test(dut):
 async def negative_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
+	elemns = 100000
 	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*193*(-1)
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
@@ -155,7 +155,7 @@ async def negative_numbers_test(dut):
 	
 		# print(float_list)
 	for i in range(elemns):
-		bfloat_binary_temp = b_f.IEEE754(bfloat_list[i])
+		bfloat_binary_temp = b_f.float_to_binary(bfloat_list[i])
 		bfloat_binary = bfloat_binary_temp[0:16]
 		bfloat_list_binary.append(bfloat_binary)
 		
@@ -166,7 +166,7 @@ async def negative_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,1)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -178,8 +178,14 @@ async def negative_numbers_test(dut):
 async def overflow_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
-	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*193*199999999999
+	elemns = 1
+	# bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*193*199999999999
+
+	bfloat_bin = '0111111101111111'
+
+	bfloat_inp = b_f.convert_ieee_to_real(bfloat_bin+"0"*16)
+	bfloat_inp = bfloat_inp + torch.Tensor([0])
+
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
 	
@@ -190,7 +196,7 @@ async def overflow_numbers_test(dut):
 	for i in range(elemns):
 		bfloat_binary_temp = b_f.IEEE754(bfloat_list[i])
 		bfloat_binary = bfloat_binary_temp[0:16]
-		bfloat_list_binary.append(bfloat_binary)
+		bfloat_list_binary.append(bfloat_bin)
 		
 	# print(bfloat_binary)
 	print(bfloat_list_binary)
@@ -199,7 +205,7 @@ async def overflow_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -211,8 +217,12 @@ async def overflow_numbers_test(dut):
 async def underflow_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
-	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)/19398738499924299
+	elemns = 1
+	bfloat_bin = "0000000010000000"
+	
+	bfloat_inp = b_f.convert_ieee_to_real(bfloat_bin+"0"*16)
+	bfloat_inp = bfloat_inp + torch.Tensor([0])
+
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
 	
@@ -223,7 +233,7 @@ async def underflow_numbers_test(dut):
 	for i in range(elemns):
 		bfloat_binary_temp = b_f.IEEE754(bfloat_list[i])
 		bfloat_binary = bfloat_binary_temp[0:16]
-		bfloat_list_binary.append(bfloat_binary)
+		bfloat_list_binary.append(bfloat_bin)
 		
 	# print(bfloat_binary)
 	print(bfloat_list_binary)
@@ -232,7 +242,7 @@ async def underflow_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -262,7 +272,7 @@ async def qnan_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
-		output_rm = await tb.model(bfloat_inp)
+		output_rm = await tb.model(bfloat_inp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -292,7 +302,7 @@ async def snan_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -322,7 +332,7 @@ async def negative_qnan_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
-		output_rm = await tb.model(bfloat_inp)
+		output_rm = await tb.model(bfloat_inp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -352,7 +362,7 @@ async def negative_snan_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
@@ -386,7 +396,7 @@ async def zero_test(dut):
 		await tb.cycle_reset()
 		await tb.input_bfloat(bfloat_list_binary[i])
 		temp = bfloat_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_float()
 
 		tb.compare(bfloat_list_binary[i],output_dut,output_rm)
