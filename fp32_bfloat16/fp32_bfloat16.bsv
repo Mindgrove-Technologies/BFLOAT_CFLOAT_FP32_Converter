@@ -58,6 +58,7 @@ module mk_fp32_bfloat16(Ifc_fp32_bfloat16);
       flags.sNaN     = pack(&rg_fp32.exponent == 1'b1 && rg_fp32.mantissa[22] == 1'b0 && rg_fp32.mantissa[0] == 1'b1);
       flags.denormal = pack(|rg_fp32.exponent == 1'b0 && (flags.qNaN == 0) && (flags.sNaN == 0) && (flags.zero == 0));
 
+      bfloat16.sign = rg_fp32.sign;
 
       /* Zero */
       if(flags.zero == 1'b1) begin
@@ -84,11 +85,20 @@ module mk_fp32_bfloat16(Ifc_fp32_bfloat16);
       else begin
         bfloat16.exponent = rg_fp32.exponent;
         Bit#(15) temp = {bfloat16.exponent,rg_fp32.mantissa[22:16]};
-        if(rg_fp32.mantissa[16] == 1'b0 && rg_fp32.mantissa[15] == 1'b1)
-          temp = temp;
-        else if (rg_fp32.mantissa[15] == 1'b1) begin
+        
+        if (rg_fp32.mantissa[15] == 1'b1 && |rg_fp32.mantissa[14:0] == 1'b1)
+        begin
           temp = temp + 15'd1;
         end
+        if (rg_fp32.mantissa[16] == 1'b1 && rg_fp32.mantissa[15] == 1'b1 && |rg_fp32.mantissa[14:0] == 1'b0)
+        begin
+          temp = temp + 15'd1;
+        end
+        else
+        begin
+          temp = temp;
+        end
+
         bfloat16.exponent = temp[14:7];
         bfloat16.mantissa = temp[6:0];
       end

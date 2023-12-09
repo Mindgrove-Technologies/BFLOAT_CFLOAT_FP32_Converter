@@ -76,8 +76,8 @@ class TB: #defining Class TB
 async def first_test(dut):
 	tb=TB(dut)
 
-	elemns = 1000
-	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7
+	elemns = 100000
+	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*193*(-1)
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
 	

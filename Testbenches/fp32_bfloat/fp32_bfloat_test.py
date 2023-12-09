@@ -73,11 +73,17 @@ class TB: #defining Class TB
 
 # Driver Code
 @cocotb.test()
-async def first_test(dut):
+async def custom_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 1000
-	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7
+	elemns = 1
+	# fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*953*(-1)
+
+	# fp32_inp = -36603.7578125
+	fp32_inp = -154112.0
+	fp32_inp = fp32_inp + torch.Tensor([0])
+	fp32_inp.to(torch.float32)
+
 	fp32_input = fp32_inp.float()
 	print(fp32_input)
 	
@@ -96,6 +102,103 @@ async def first_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp[i]
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+
+@cocotb.test()
+async def normal_numbers_test(dut):
+	tb=TB(dut)
+
+	elemns = 10
+	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*998
+
+	fp32_input = fp32_inp.float()
+	print(fp32_input)
+	
+	float_list = fp32_inp.tolist()
+	float_list_binary = []
+	
+		# print(float_list)
+	for i in range(elemns):
+		fp32_binary = f_b.IEEE754(float_list[i])
+		float_list_binary.append(f_b.IEEE754(float_list[i]))
+		
+	# print(fp32_binary)
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_inp[i]
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+@cocotb.test()
+async def negative_numbers_test(dut):
+	tb=TB(dut)
+
+	elemns = 10
+	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*953*(-1)
+
+	fp32_input = fp32_inp.float()
+	print(fp32_input)
+	
+	float_list = fp32_inp.tolist()
+	float_list_binary = []
+	
+		# print(float_list)
+	for i in range(elemns):
+		fp32_binary = f_b.IEEE754(float_list[i])
+		float_list_binary.append(f_b.IEEE754(float_list[i]))
+		
+	# print(fp32_binary)
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_inp[i]
+		output_rm = await tb.model(temp)
+		output_dut = await tb.get_bfloat()
+
+		tb.compare(float_list_binary[i],output_dut,output_rm)
+		await tb.cycle_wait(5)
+		await tb.cycle_reset()
+
+@cocotb.test()
+async def zero_test(dut):
+	tb=TB(dut)
+
+	elemns = 10
+	fp32_inp = torch.rand(elemns, dtype=torch.float32)*0
+
+	fp32_input = fp32_inp.float()
+	print(fp32_input)
+	
+	float_list = fp32_inp.tolist()
+	float_list_binary = []
+	
+		# print(float_list)
+	for i in range(elemns):
+		fp32_binary = "0"*32
+		float_list_binary.append(fp32_binary)
+		
+	# print(fp32_binary)
+	print(float_list_binary)
+
+	for i in range(elemns):
+		await tb.cycle_reset()
+		await tb.input_fp32(float_list_binary[i])
+		temp = fp32_input[i]
 		output_rm = await tb.model(temp)
 		output_dut = await tb.get_bfloat()
 
