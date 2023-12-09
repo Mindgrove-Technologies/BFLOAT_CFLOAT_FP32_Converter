@@ -22,6 +22,41 @@ import struct
 sys.path.append("../../reference_model/")
 import cfloat152_fp32 as fp_c
 
+def conv_cfloat_to_binary(sign,exponent,mantissa):
+    bin_sign = str(sign)
+    bin_exponent = bin(exponent)[2:].zfill(5)
+    if (mantissa == 0):
+        bin_mantissa = "00"
+    elif (mantissa == 1):
+        bin_mantissa = "01"
+    elif (mantissa == 2):
+        bin_mantissa = "10"
+    else:
+        bin_mantissa = "11"
+
+    bin_cfloat = bin_sign + bin_exponent + bin_mantissa
+    return bin_cfloat
+
+def generate_cfloat_num (sign, exponent, mantissa,bias):
+    if (exponent != 0):
+        value = ((-1) ** sign) * (2** (exponent - bias))
+        if mantissa == 0:
+            return value * 1
+        elif mantissa == 1:
+            return value * 1.25
+        elif mantissa == 2:
+            return value * 1.5
+        else:
+            return value * 1.75
+    else:
+        value = 2 ** (-bias) * ((-1) ** sign)
+        if mantissa == 1:
+            return value * 0.25
+        elif mantissa == 2:
+            return value * 0.5
+        else:
+            return value * 0.75
+
 class TB: #defining Class TB 
     def __init__(self,dut):
         self.dut = dut
@@ -56,8 +91,8 @@ class TB: #defining Class TB
         dut_output = self.dut.fp32_out.value
         return dut_output
 
-    async def reference_model (self,cfloat_in,bias):
-        output_rm = fp_c.convert_cfloat152_fp32(cfloat_in,bias)
+    async def reference_model (self,cfloat_in,bias,neg_zero):
+        output_rm = fp_c.convert_cfloat152_fp32(cfloat_in,bias,neg_zero)
         return output_rm
     
 
@@ -67,3 +102,138 @@ class TB: #defining Class TB
         # print('\n')
         assert output_rm == str(output_dut) ,f"Test Failed, rm: {output_rm} and dut: {str(output_dut)} not matching for input: {cfloat_in} and bias: {bias}"
 
+# @cocotb.test()
+async def test_single_number(dut):
+    tb = TB(dut)
+
+    cfloat_in = 2.0
+
+@cocotb.test()
+async def test_all_zero(dut):
+    tb = TB(dut)
+
+    cfloat_in = 0.0
+    neg_zero = 0
+    exponent = 0
+    mantissa = 0
+    await tb.cycle_reset()
+    # positive zero
+    for bias in range(64):
+        bin_cfloat = conv_cfloat_to_binary(neg_zero,exponent,mantissa)
+        output_rm = await tb.reference_model(cfloat_in,bias,neg_zero)
+        await tb.input_dut(bin_cfloat,bias)
+        output_dut = await tb.get_output()
+        tb.compare (output_dut,output_rm,cfloat_in,bias)
+
+    # Negative zero
+    for bias in range(64):
+        bin_cfloat = conv_cfloat_to_binary(neg_zero,exponent,mantissa)
+        output_rm = await tb.reference_model(cfloat_in,bias,neg_zero)
+        await tb.input_dut(bin_cfloat,bias)
+        output_dut = await tb.get_output()
+        tb.compare (output_dut,output_rm,cfloat_in,bias)
+    
+    await tb.cycle_reset()
+    await tb.cycle_wait(10)
+
+@cocotb.test()
+async def test_positive_normal_numbers_single_bias(dut):
+    tb = TB(dut)
+    sign = 0
+    neg_zero = 0
+
+    await tb.cycle_reset()
+
+    iteration = 10000
+    for i in range(iteration):
+        exponent = random.randint(1,31)
+        mantissa = random.randint(0,3)
+        bias = random.randint(0,63)
+    
+        tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
+        cfloat_in = generate_cfloat_num(sign, exponent, mantissa, bias)
+        bin_cfloat = conv_cfloat_to_binary(sign,exponent,mantissa)
+        output_rm = await tb.reference_model(cfloat_in,bias,neg_zero)
+        await tb.input_dut(bin_cfloat,bias)
+        output_dut = await tb.get_output()
+        tb.compare (output_dut,output_rm,cfloat_in,bias)
+    
+    await tb.cycle_reset()
+    await tb.cycle_wait(10)
+
+@cocotb.test()
+async def test_negative_normal_numbers_single_bias(dut):
+    tb = TB(dut)
+    sign = 1
+    neg_zero = 0
+
+    await tb.cycle_reset()
+
+    iteration = 10000
+    for i in range(iteration):
+        exponent = random.randint(1,31)
+        mantissa = random.randint(0,3)
+        bias = random.randint(0,63)
+    
+        tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
+        cfloat_in = generate_cfloat_num(sign, exponent, mantissa, bias)
+        # print(cfloat_in)
+        bin_cfloat = conv_cfloat_to_binary(sign,exponent,mantissa)
+        output_rm = await tb.reference_model(cfloat_in,bias,neg_zero)
+        await tb.input_dut(bin_cfloat,bias)
+        output_dut = await tb.get_output()
+        tb.compare (output_dut,output_rm,cfloat_in,bias)
+    
+    await tb.cycle_reset()
+    await tb.cycle_wait(10)
+
+@cocotb.test()
+async def test_positive_denormal_numbers_single_bias(dut):
+    tb = TB(dut)
+    sign = 0        
+    exponent = 0
+    mantissa = 0
+
+    neg_zero = 0
+
+    await tb.cycle_reset()
+    # bias = random.randint(0,63)
+    for bias in range(0,64):
+        for mantissa in range(1,4):
+            # bias = 1
+        
+            tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
+            cfloat_in = generate_cfloat_num(sign, exponent, mantissa, bias)
+            bin_cfloat = conv_cfloat_to_binary(sign,exponent,mantissa)
+            output_rm = await tb.reference_model(cfloat_in,bias,neg_zero)
+            await tb.input_dut(bin_cfloat,bias)
+            output_dut = await tb.get_output()
+            tb.compare (output_dut,output_rm,cfloat_in,bias)
+    
+    await tb.cycle_reset()
+    await tb.cycle_wait(10)
+
+@cocotb.test()
+async def test_negative_denormal_numbers_single_bias(dut):
+    tb = TB(dut)
+    sign = 1        
+    exponent = 0
+    mantissa = 0
+
+    neg_zero = 0
+
+    await tb.cycle_reset()
+    # bias = random.randint(0,63)
+    for bias in range(0,64):
+        for mantissa in range(1,4):
+        
+            tb.dut._log.info(f"bias: {bias} exponenet: {exponent} mantissa: {mantissa}")
+            cfloat_in = generate_cfloat_num(sign, exponent, mantissa, bias)
+            bin_cfloat = conv_cfloat_to_binary(sign,exponent,mantissa)
+            output_rm = await tb.reference_model(cfloat_in,bias,neg_zero)
+            await tb.input_dut(bin_cfloat,bias)
+            output_dut = await tb.get_output()
+            tb.compare (output_dut,output_rm,cfloat_in,bias)
+    
+    await tb.cycle_reset()
+    await tb.cycle_wait(10)
