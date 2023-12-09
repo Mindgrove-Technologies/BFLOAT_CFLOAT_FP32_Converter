@@ -1,8 +1,37 @@
 #+TITLE: FP Convertor Modules
-#+AUTHOR: Rohit Srinivas R G, M Kapil Shyam
+#+AUTHOR: Rohit Srinivas R G (CS23Z002), M Kapil Shyam (CS23Z064)
 
-* Description
-This repository consists of the following convertor modules 
-- fp32 to/from bfloat16
-- fp32 to/from cfloat8 1_4_3
-- fp32 to/from cfloat8 1_5_2
+* TABLE OF CONTENT :TOC:
+- [[#description][DESCRIPTION]]
+- [[#repository-structure][Repository structure]]
+
+* DESCRIPTION
+
+This project is undertaken as part of project work for the course CS6230 CAD FOR VLSI, IITM. This repository consists of the following modules written in Bluepsec System Verilog.
+
+- fp32 to bfloat16
+- fp32 to cfloat8 1_4_3
+- fp32 to cfloat8 1_5_2
+- cfloat8 1_5_2 to fp32
+- cfloat8 1_4_3 to fp32
+- bfloat16      to fp32
+
+* Repository structure
+#+begin_src
+.
+├── doc/                  [Contains the reference document for modules]
+├── fp32_bfloat16/        [Contains the src code for fp32_bfloat16 conversions]
+├── fp32_cfloat8/         [Contains the src code for fp32_cfloat8 conversions]
+├── Makefile              [Master Makefile to perform actions]
+├── README.org
+├── reference_model/      [Contains the reference model used for verfications]
+├── Testbench.bsv         [Bluespec Testbench to import all the modules]
+└── Testbenches/          [Directory consisting of cocotb-testbenches]
+    ├── bfloat_fp32       [Contains cocotb-testbenche for bfloat16 to fp32 conversion]
+    ├── cfloat143_fp32    [Contains cocotb-testbenche for cfloat143 to fp32 conversion]
+    ├── cfloat152_fp32    [Contains cocotb-testbenche for cfloat152 to fp32 conversion]
+    ├── fp32_bfloat       [Contains cocotb-testbenche for fp32 to bfloat16 conversion]
+    ├── fp32_cfloat143    [Contains cocotb-testbenche for fp32 to cfloat143 conversion]
+    └── fp32_cfloat152    [Contains cocotb-testbenche for fp32 to cfloat152 conversion]
+
+#+end_src
