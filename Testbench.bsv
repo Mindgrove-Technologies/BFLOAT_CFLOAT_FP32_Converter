@@ -12,6 +12,7 @@ package Testbench;
 
 import fp32_cfloat8_types ::*;
 import fp32_bfloat16_types ::*;
+import fp32_cfloat152 ::*;
 import fp32_cfloat143 ::*;
 import fp32_bfloat16 ::*;
 
@@ -32,7 +33,7 @@ endinterface
 // (* synthesize *)
 // module mkTestbench (Ifc_Testbench);
 
-(* synthesize *)
+// (* synthesize *)
 module mkTestbench (Empty);
 
 `ifdef simulate_cfloat_152
