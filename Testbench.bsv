@@ -11,7 +11,9 @@ package Testbench;
 
 
 import fp32_cfloat8_types ::*;
+import fp32_bfloat16_types ::*;
 import fp32_cfloat143 ::*;
+import fp32_bfloat16 ::*;
 
 // ================================================================
 
@@ -19,7 +21,7 @@ import fp32_cfloat143 ::*;
 // Project Defines
 // ================================================================
 
-`define simulate_cfloat_143 1
+`define simulate_bfloat 1
 
 // ================================================================
 
@@ -87,6 +89,19 @@ module mkTestbench (Empty);
 
   // $display("FP32 value: %32b", pack(lv_fp32_val));
 
+
+  `endif
+
+  `ifdef simulate_bfloat
+  
+    Ifc_fp32_bfloat16 mod <- mk_fp32_bfloat16;
+
+    // doc: rule: This rule is to check conversion of FP32 to CFLOAT8_143.
+    rule rl_sample_1 ;
+      mod.fp32_in(unpack(32'b01000000011110011000000000000000));
+    endrule
+
+    BFLOAT16_t lv_bfloat_val = mod.bfloat16_out;
 
   `endif
    
