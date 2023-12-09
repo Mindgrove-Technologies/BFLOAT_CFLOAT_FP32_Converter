@@ -125,6 +125,7 @@ async def test_all_zero(dut):
         output_dut = await tb.get_output()
         tb.compare (output_dut,output_rm,cfloat_in,bias)
 
+    neg_zero = 1
     # Negative zero
     for bias in range(64):
         bin_cfloat = conv_cfloat_to_binary(neg_zero,exponent,mantissa)
