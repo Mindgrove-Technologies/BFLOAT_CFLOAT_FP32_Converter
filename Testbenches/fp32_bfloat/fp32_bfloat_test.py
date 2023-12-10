@@ -119,7 +119,7 @@ async def custom_numbers_test(dut):
 async def normal_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
+	elemns = 1000
 	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*998
 
 	fp32_input = fp32_inp.float()
@@ -151,7 +151,7 @@ async def normal_numbers_test(dut):
 async def negative_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 10
+	elemns = 1000
 	fp32_inp = torch.rand(elemns, dtype=torch.float32)*24*7*953*(-1)
 
 	fp32_input = fp32_inp.float()

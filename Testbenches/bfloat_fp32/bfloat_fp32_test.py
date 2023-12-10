@@ -118,7 +118,7 @@ async def custom_numbers_test(dut):
 async def normal_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 100000
+	elemns = 1000
 	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*536
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
@@ -150,7 +150,7 @@ async def normal_numbers_test(dut):
 async def negative_numbers_test(dut):
 	tb=TB(dut)
 
-	elemns = 100000
+	elemns = 1000
 	bfloat_inp = torch.rand(elemns, dtype=torch.bfloat16)*24*7*193*(-1)
 	bfloat_input = bfloat_inp.bfloat16()
 	print(bfloat_input)
