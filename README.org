@@ -9,6 +9,8 @@
   - [[#cfloat8---fp32][CFLOAT8 -> FP32]]
   - [[#fp32---bfloat16][FP32 -> BFLOAT16]]
   - [[#bfloat16---fp32][BFLOAT16 -> FP32]]
+- [[#verification][VERIFICATION]]
+- [[#testing][TESTING]]
 
 * DESCRIPTION
 
@@ -43,14 +45,26 @@ This project is undertaken as part of project work for the course CS6230 CAD FOR
 
 * DESIGN
 
+The source files for the following implemented modules are given in the table below
+
+| Modules                | Location                                |
+|------------------------+-----------------------------------------|
+| FP32 <=> CFLOAT8 1_5_2 | ./fp32_cfloat8/fp32_cfloat152.bsv       |
+| FP32 <=> CFLOAT8 1_4_2 | ./fp32_cfloat8/fp32_cfloat143.bsv       |
+| FP32 <=> BFLOAT16      | ./fp32_bfloat16/fp32_bfloat16_types.bsv |
+
+*./fp32_cfloat8/fp32_cfloat8/fp32_cfloat8_types.bsv* - Contains the structure element and other typedefs used in the fp32 to cfloat8 source code
+*./fp32_cfloat8/fp32_bfloat16/fp32_bfloat16_types.bsv* - Contains the structure element and other typedefs used in the fp32 to bfloat16 source code
+
 ** FP32 -> CFLOAT8
 
 Required Inputs  : *32-bit FP Number* and *bias*
+
 Generated Output : *8-bit CFLOAT152 Binary 1_4_3 & 1_5_2*
 
 *** Supports Overflow mechanism
 
-If the given *input 32-bit number is greater than the largest representable normal number* for the *given bias* an overflow condtion is triggered, this implementation sets the output thar largest representable normal number for the given bias.
+If the given *input 32-bit number is greater than the largest representable normal number* for the *given bias* an overflow condtion is triggered, this implementation sets the output that largest representable normal number for the given bias.
 
 *** Supports Gradual Underflow with denormal/subnormal handling
 
@@ -75,6 +89,7 @@ When converting fp32 zeroes to cfloat8 zeroes the sign bit is preserved.
 ** CFLOAT8 -> FP32
 
 Required Inputs  : *8-bit CFLOAT152 Binary 1_4_3 (or) 1_5_2* and *bias*
+
 Generated Output : *32-bit FP Number*
 
 CFLOAT8 (8-bit) is a lower precision system when compared to FP32(32-bit). All representable cfloat numbers can be directly represented as normal numbers in the Single Precision space.
@@ -86,8 +101,8 @@ When converting cfloat8 zeroes to fp32 zeroes the sign bit is preserved.
 ** FP32 -> BFLOAT16
 
 Required Inputs  : *32-bit FP Number*
-Generated Output : *16-bit BFLOAT16 1:sign 8:exponent 7:mantissa*
 
+Generated Output : *16-bit BFLOAT16 1:sign 8:exponent 7:mantissa*
 
 *** Supports Overflow mechanism
 
@@ -101,14 +116,82 @@ This implementation supports the IEEE standard round mechanism of round to neare
 
 When converting fp32 zeroes to bfloat16 zeroes the sign bit is preserved.
 
-
 ** BFLOAT16 -> FP32
 
 Required Inputs  : *16-bit BFLOAT16 1:sign 8:exponent 7:mantissa*
+
 Generated Output : *32-bit FP Number*
 
-BFLOAT16 (16-bit) is a lower precision system when compared to FP32(32-bit). All representable bfloat numbers can be directly represented as normal numbers in the Single Precision space. The conversion mechanism is padding 16 zeroes to the mantissa of the given bfloat number and the output is 32-bit.
+BFLOAT16 (16-bit) is a lower precision system when compared to FP32(32-bit). All representable bfloat numbers can be directly represented as normal numbers in the Single Precision space. The conversion mechanism is padding 16 zeroes to the mantissa of the given bfloat number and the output is 32-bit single precision Float.
 
 *** Preserves the sign bit when coverting zeroes
 
 When converting bfloat16 zeroes to fp32 zeroes the sign bit is preserved.
+
+* VERIFICATION
+
+*** Reference Model
+
+All reference models used in functionally verifying the implemented modules are present in =./reference_model=
+
+| Model                 | Filename          |
+|-----------------------+-------------------|
+| fp32 -> cfloat8 1_5_2 | fp32_cfloat152.py |
+| fp32 -> cfloat8 1_4_3 | fp32_cfloat143.py |
+| fp32 -> bfloat16      | fp32_bfloat16.py  |
+| cfloat8 1_5_2 -> fp32 | cfloat152_fp32.py |
+| cfloat8 1_4_3 -> fp32 | cfloat143_fp32.py |
+| bfloat16      -> fp32 | bfloat16_fp32.py  |
+
+**** FP32 -> CFLOAT8
+
+Inputs: FP32 and integer bias
+
+Outputs: CFLOAT8 Binary
+
+This repository contains custom made reference model using python. The model accepts a float number (fp32) and a integer bias. A dictionary of all possible normal numbers  and denormal numbers of the cfloat8 system for the given bias is generated. The dictionary for normal numbers uses the exponent value as key field and the value field is a list populated with the values for each possbile mantissa. The dictionary for denormal has the mantissa value as key field and the corresponding denormal number as the value field.
+
+The given fp32 input is checked against the values in the dictionary for both normal and denormal numbers considering the overflow,zero & underflow cases. If the exact match is not found , but the given number can represented by either rounding up or down , then the rounding mechanism round-to-nearest is used to get the output.
+
+Once there is a search hit within the dictionary or if the rounding has taken place, the corresponding sign, exponent & mantissa values are stored. The Binary for CFLOAT8 is generated using the stored sign, exponent and mantissa values and returned.
+
+This reference also supports preserving sign bit for zeroes. This is done by accepting another input =neg_zero= that determines if the given input is a negative zero.
+
+**** CFLOAT8 -> FP32
+
+Inputs: CFLOAT8 number and bias
+
+Outputs: FP32 Binary
+
+This repository contains custom made reference model using python. The model accepts a float number (cfloat8) and a integer bias. A dictionary of all possible normal numbers  and denormal numbers of the cfloat8 system for the given bias is generated. The dictionary for normal numbers uses the exponent value as key field and the value field is a list populated with the values for each possbile mantissa. The dictionary for denormal has the mantissa value as key field and the corresponding denormal number as the value field.
+
+If the given cfloat8 number does not match with the dictionary values , then an error is generated mentioning the given cfloat8 number is not a valid input. As the cfloat8 precision is lower than fp32, the cfloat8 inputs can directly be represented in fp32 space, and as such the cfloat8 input if a valid number is directly converted to fp32 binary and returned.
+
+
+This reference also supports preserving sign bit for zeroes. This is done by accepting another input =neg_zero= that determines if the given input is a negative zero.
+
+*** Testbenches
+
+All the testbenches written are python-cocotb testbenches. These testbench files are present in =./Testbenches/= . The cocotb-testbench are organised into folder of the module names and each folder contains the testbench itself and a makefile to run the test.
+
+| Modules               | Testbench                                           |
+|-----------------------+-----------------------------------------------------|
+| fp32 -> cfloat8 1_5_2 | ./Testbenches/fp32_cfloat152/test_fp32_cfloat152.py |
+| fp32 -> cfloat8 1_4_3 | ./Testbenches/fp32_cfloat143/test_fp32_cfloat143.py |
+| fp32 -> bfloat16      | ./Testbenches/fp32_bfloat/fp32_bfloat_test.py       |
+| cfloat8 1_5_2 -> fp32 | ./Testbenches/cfloat152_fp32/test_cfloat152_fp32.py |
+| cfloat8 1_4_3 -> fp32 | ./Testbenches/cfloat143_fp32/test_cfloat143_fp32.py |
+| bfloat16      -> fp32 | ./Testbenches/bfloat_fp32/bfloat_fp32_test.py       |
+
+**** FP32 -> CFLOAT8
+
+The random fp32 inputs are generated using numpy python package. The input bias is also randomly generated using python random package. The following tests are written in the testbench.
+
+
+
+
+
+
+
+
+* TESTING
