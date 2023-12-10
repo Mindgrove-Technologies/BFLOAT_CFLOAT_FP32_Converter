@@ -1,3 +1,8 @@
+'''**********************************************
+ Author: Rohit Srinivas R G, M Kapil Shyam
+ Email: CS23Z002@smail.iitm.ac.in, CS23Z064@smail.iitm.ac.in
+**********************************************'''
+
 import torch
 import sys
 sys.path.append('../../reference_model')
@@ -59,8 +64,8 @@ class TB: #defining Class TB
 
 
 #Reference model with only encryption 
-	async def model (self,fp32_input):
-		bfloat_value = f_b.convert_fp32_bfloat16(fp32_input)
+	async def model (self,fp32_input, neg_zero):
+		bfloat_value = f_b.convert_fp32_bfloat16(fp32_input,neg_zero)
 		return bfloat_value
 
 
@@ -102,7 +107,7 @@ async def custom_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -135,7 +140,7 @@ async def normal_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -167,7 +172,7 @@ async def negative_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,1)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -206,7 +211,7 @@ async def overflow_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_input
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -253,7 +258,7 @@ async def underflow_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -291,7 +296,7 @@ async def negative_overflow_numbers_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,1)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -337,8 +342,8 @@ async def negative_underflow_numbers_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
-		temp = fp32_input[i]
-		output_rm = await tb.model(temp)
+		temp = fp32_inp
+		output_rm = await tb.model(temp,1)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -368,7 +373,7 @@ async def qnan_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
-		output_rm = await tb.model(fp32_inp)
+		output_rm = await tb.model(fp32_inp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -398,7 +403,7 @@ async def snan_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -428,7 +433,7 @@ async def negative_qnan_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
-		output_rm = await tb.model(fp32_inp)
+		output_rm = await tb.model(fp32_inp,1)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -458,7 +463,7 @@ async def negative_snan_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_inp
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -491,7 +496,7 @@ async def zero_test(dut):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
 		temp = fp32_input[i]
-		output_rm = await tb.model(temp)
+		output_rm = await tb.model(temp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
