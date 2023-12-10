@@ -69,10 +69,11 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
             $display("Exponent Underflow Limit: %d", exponent_underflow_limit);
         `endif
 
-        CFLOAT_FLAGS_t lv_flags = CFLOAT_FLAGS_t {    zero      : pack((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)),
+        CFLOAT_FLAGS_t lv_flags = CFLOAT_FLAGS_t {    
+                                        zero      : pack(((|rg_fp32.exponent == 1'b0) && (|rg_fp32.mantissa == 1'b0)) || (rg_fp32.exponent < exponent_underflow_limit - 8'd5)),
                                         invalid   : pack((&rg_fp32.exponent == 1'b1)),
                                         denormal  : 1'b0,
-                                        overflow  : pack((rg_fp32.exponent > exponent_overflow_limit) && (rg_fp32.mantissa[22:20] == 3'b111)),
+                                        overflow  : pack((rg_fp32.exponent > exponent_overflow_limit) || ((rg_fp32.mantissa[22:20] == 3'b111) && (rg_fp32.exponent == exponent_overflow_limit) && |rg_fp32.mantissa[19:0] == 1'b1)),
                                         underflow : pack(rg_fp32.exponent < exponent_underflow_limit)
                                     };
 
@@ -93,10 +94,15 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
         /* Underflow and Denormal Numbers */
         else if(lv_flags.underflow == 1)
         begin
-            if (rg_fp32.exponent < (exponent_underflow_limit - 8'd4))
+            if (rg_fp32.exponent < (exponent_underflow_limit - 8'd5))
             begin
-                cfloat143.exponent = 4'd0;
+                cfloat143.exponent = 4'd0;  
                 cfloat143.mantissa = 3'd0;
+            end
+            else if (rg_fp32.exponent == (exponent_underflow_limit - 8'd5)) begin
+                lv_flags.denormal = 1'd1;
+                cfloat143.exponent = 4'd0;
+                cfloat143.mantissa = 3'b001;
             end
             else if (rg_fp32.exponent == (exponent_underflow_limit - 8'd4))
             begin
@@ -158,14 +164,20 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
             end
             else if (rg_fp32.exponent == (exponent_underflow_limit - 8'd1))
             begin
-                if (rg_fp32.mantissa[22:20] == 3'b000 || rg_fp32.mantissa[22:20] == 3'b001 || rg_fp32.mantissa[22:20] == 3'b010 || rg_fp32.mantissa[22:20] == 3'b011 )
+                if (rg_fp32.mantissa[22:20] == 3'b000 || rg_fp32.mantissa[22:20] == 3'b001 || rg_fp32.mantissa[22:20] == 3'b010  )
                 begin
                     lv_flags.denormal = 1'b1;
 
                     cfloat143.exponent = 4'd0;
                     cfloat143.mantissa = 3'b111;
                 end
-                else if (rg_fp32.mantissa[22:20] == 3'b100 || rg_fp32.mantissa[22:20] == 3'b101 || rg_fp32.mantissa[22:20] == 3'b110 || rg_fp32.mantissa[22:20] == 3'b111 )
+                else if (rg_fp32.mantissa[22:20] == 3'b011 && rg_fp32.mantissa[19] == 1'b0) begin
+                    lv_flags.denormal = 1'b1;
+
+                    cfloat143.exponent = 4'd0;
+                    cfloat143.mantissa = 3'b111;
+                end
+                else if ((rg_fp32.mantissa[22:20] == 3'b011 && rg_fp32.mantissa[19] == 1'b1) || rg_fp32.mantissa[22:20] == 3'b100 || rg_fp32.mantissa[22:20] == 3'b101 || rg_fp32.mantissa[22:20] == 3'b110 || rg_fp32.mantissa[22:20] == 3'b111 )
                 begin
                     cfloat143.exponent = 4'd1;
                     cfloat143.mantissa = 3'b000;
@@ -212,6 +224,7 @@ module mk_fp32_cfloat143(Ifc_fpu_convert_fp32_cfloat143);
 endmodule: mk_fp32_cfloat143
 
 // Module to convert Tesla's CFLOAT8_143 to IEEE-754 FP32.
+(* synthesize *)
 module mk_cfloat143_fp32(Ifc_fpu_convert_cfloat143_fp32);
 
     // Register Declarations

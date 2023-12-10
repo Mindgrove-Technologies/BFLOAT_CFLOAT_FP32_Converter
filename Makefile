@@ -15,39 +15,6 @@ BSC_PATHS = -p %/Prelude:%/Libraries:./fp32_cfloat8/:./fp32_bfloat16:./
 BSIM_DIRS = -simdir build_bsim -bdir build_bsim -info-dir build_bsim
 BSIM_EXE = $(TOPMODULE)_bsim
 
-.PHONY: all_bsim
-all_bsim: full_clean  compile  link    simulate
-
-build_bsim:
-	mkdir  build_bsim
-
-.PHONY: compile
-compile: build_bsim
-	@echo Compiling for Bluesim ...
-	bsc -u -sim $(BSIM_DIRS) $(BSC_COMP_FLAGS) $(BSC_PATHS) -g $(TOPMODULE)  $(TOPFILE) 
-	@echo Compiling for Bluesim finished
-
-.PHONY: link
-link:
-	@echo Linking for Bluesim ...
-	bsc -e $(TOPMODULE) -sim -o $(BSIM_EXE) $(BSIM_DIRS) $(BSC_LINK_FLAGS) $(BSC_PATHS)
-	@echo Linking for Bluesim finished
-
-.PHONY: simulate
-simulate:
-	@echo Bluesim simulation ...
-	./$(BSIM_EXE)  -V
-	@echo Bluesim simulation finished
-
-.PHONY: clean
-clean:
-	rm -f  build_bsim/*  build_v/*    *~
-
-.PHONY: full_clean
-full_clean:
-	rm -r -f  build_bsim  build_v  verilog_dir  *~
-	rm -f  *$(TOPMODULE)*  *.vcd
-
 V_DIRS = -vdir verilog_dir -bdir build_v -info-dir build_v
 VSIM_EXE = $(TOPMODULE)_vsim
 
@@ -76,3 +43,36 @@ v_simulate:
 	@echo Verilog simulation...
 	./$(VSIM_EXE)  +bscvcd
 	@echo Verilog simulation finished
+
+.PHONY: clean
+clean:
+	rm -f   build_v/*  verilog_dir/*
+
+.PHONY: full_clean
+full_clean:
+	rm -r -f  build_bsim  build_v  verilog_dir  *~
+	rm -f  *$(TOPMODULE)*  *.vcd
+
+.PHONY: test_fp32_cfloat152
+test_fp32_cfloat152:
+	cd Testbenches/fp32_cfloat152 && make
+
+.PHONY: test_fp32_cfloat143
+test_fp32_cfloat143:
+	cd Testbenches/fp32_cfloat143 && make
+
+.PHONY: test_fp32_bfloat
+test_fp32_bfloat:
+	cd Testbenches/fp32_bfloat && make
+
+.PHONY: test_cfloat152_fp32
+test_cfloat152_fp32:
+	cd Testbenches/cfloat152_fp32 && make
+
+.PHONY: test_cfloat143_fp32
+test_cfloat143_fp32:
+	cd Testbenches/cfloat143_fp32 && make
+
+.PHONY: test_bfloat_fp32
+test_bfloat_fp32:
+	cd Testbenches/bfloat_fp32 && make

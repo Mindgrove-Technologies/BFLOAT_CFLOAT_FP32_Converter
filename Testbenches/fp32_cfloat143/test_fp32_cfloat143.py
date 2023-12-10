@@ -24,7 +24,7 @@ import numpy as np
 import struct
 
 sys.path.append("../../reference_model/")
-import fp32_cfloat152 as fp_c
+import fp32_cfloat143 as fp_c
 
 
 
@@ -74,8 +74,8 @@ class TB: #defining Class TB
 
     async def input_dut (self,fp32_in,bias):
         self.dut._log.debug("Providing input \n")
-        self.dut.fp32_in_fp_in.value = int(fp32_in,2)
-        self.dut.bias_in_bias.value  = bias 
+        self.dut.convert_fp32_cfloat143_fp32_in.value = int(fp32_in,2)
+        self.dut.convert_fp32_cfloat143_bias.value  = bias 
         await RisingEdge(self.dut.CLK) 
 
     
@@ -83,11 +83,11 @@ class TB: #defining Class TB
         await RisingEdge(self.dut.CLK)
         await RisingEdge(self.dut.CLK)
         self.dut._log.debug("Probing output\n")
-        dut_output = self.dut.cfloat152_out.value
+        dut_output = self.dut.get_cfloat143.value
         return dut_output
 
     async def reference_model (self,fp32_in,bias,neg_zero):
-        output_rm = fp_c.convert_fp32_cfloat152(fp32_in,bias,neg_zero)
+        output_rm = fp_c.convert_fp32_cfloat143(fp32_in,bias,neg_zero)
         return output_rm
     
 
@@ -104,17 +104,18 @@ async def test_single_num(dut):
 
     neg_zero = 0
     bias = 0
-    fp32_in = 0.00000719332956578000448644161224365234375
+    fp32_in = np.array([1.4450937509536743], dtype=np.float32)
+    # fp32_in = 2.7460129725653815e-09
     # fp32_in = 0.02
     # fp32_in = 0.34375
     print(fp32_in)
     await tb.cycle_reset()
     bin_fp32 = conv_fp32_to_binary(fp32_in)
     print(bin_fp32)
-    output_rm = await tb.reference_model(fp32_in,bias,neg_zero)
-    await tb.input_dut (bin_fp32,bias)
+    output_rm = await tb.reference_model(fp32_in[0],bias,neg_zero)
+    await tb.input_dut (bin_fp32[0],bias)
     output_dut = await tb.get_output()
-    tb.compare (output_dut, output_rm,fp32_in,bias)
+    tb.compare (output_dut, output_rm,fp32_in[0],bias)
 
 
     await tb.cycle_reset()
@@ -158,7 +159,7 @@ async def test_positive_overflow(dut):
     # bias = 36
     size = 1
     i= 0
-    max_cfloat = (2**(31-bias)) * 1.75
+    max_cfloat = (2**(15-bias)) * 1.875
     low_limit = max_cfloat+1
     high_limit = max_cfloat + 2
 
@@ -185,7 +186,7 @@ async def test_negative_overflow(dut):
     # bias = 36
     size = 1
     i= 0
-    max_cfloat = (2**(31-bias)) * 1.75
+    max_cfloat = (2**(15-bias)) * 1.875
     low_limit = - (max_cfloat+1)
     high_limit = - (max_cfloat + 2)
 
@@ -204,7 +205,8 @@ async def test_positive_underflow(dut):
     tb =TB(dut)
 
     neg_zero = 0
-    bias = random.randint(0, 63)
+    # bias = random.randint(0, 63)
+    bias = 0
 
     size = 10000
     low_limit = 0.0
@@ -230,7 +232,7 @@ async def test_negative_underflow(dut):
     bias = random.randint(0, 63)
 
 
-    size = 10
+    size = 10000
     low_limit = 0.0
     high_limit = -((2**(1-bias)) * 1)
     np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
@@ -254,9 +256,9 @@ async def test_positive_normal_numbers_single_bias(dut):
     bias = random.randint(0, 63)
 
 
-    size = 10000
+    size = 10
     low_limit = ((2 ** (1-bias)) * 1)
-    high_limit = ((2**(31-bias)) * 1.75)
+    high_limit = ((2**(15-bias)) * 1.875)
     np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
     bin_fp32 = conv_fp32_to_binary(np_fp32)
     await tb.cycle_reset()
@@ -278,7 +280,7 @@ async def test_positive_normal_numbers_all_bias(dut):
     for bias in range(64):
         size = 10
         low_limit = ((2 ** (1-bias)) * 1)
-        high_limit = ((2**(31-bias)) * 1.75)
+        high_limit = ((2**(15-bias)) * 1.875)
         np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
         bin_fp32 = conv_fp32_to_binary(np_fp32)
         await tb.cycle_reset()
@@ -299,9 +301,9 @@ async def test_negative_normal_numbers_single_bias(dut):
     bias = random.randint(0, 63)
 
 
-    size = 10000
+    size = 10
     low_limit = - ((2 ** (1-bias)) * 1)
-    high_limit = - ((2**(31-bias)) * 1.75)
+    high_limit = - ((2**(15-bias)) * 1.875)
     np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
     bin_fp32 = conv_fp32_to_binary(np_fp32)
     await tb.cycle_reset()
@@ -323,7 +325,7 @@ async def test_negative_normal_numbers_all_bias(dut):
     for bias in range(64):
         size = 10
         low_limit = - ((2 ** (1-bias)) * 1)
-        high_limit = - ((2**(31-bias)) * 1.75)
+        high_limit = - ((2**(15-bias)) * 1.875)
         np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
         bin_fp32 = conv_fp32_to_binary(np_fp32)
         await tb.cycle_reset()

@@ -1,3 +1,8 @@
+'''**********************************************
+ Author: Rohit Srinivas R G, M Kapil Shyam
+ Email: CS23Z002@smail.iitm.ac.in, CS23Z064@smail.iitm.ac.in
+**********************************************'''
+
 import torch
 
 # Python program to convert
@@ -132,7 +137,7 @@ def convert_ieee_to_real(fp32_binary):
 	return real_no
 
 
-def convert_fp32_bfloat16(fp32_in):
+def convert_fp32_bfloat16(fp32_in,neg_zero):
 
 	inf = 3.4028234663852886e+38
 	neg_inf = -3.4028234663852886e+38
@@ -156,13 +161,15 @@ def convert_fp32_bfloat16(fp32_in):
 
 	for i in range(1):
 		if(fp32_in != (qnan) and fp32_in != (snan) and fp32_in != inf and fp32_in != underflow and fp32_in != neg_underflow and fp32_in != neg_inf and fp32_in != nqnan and fp32_in != nsnan):
-			if (bfloat_list == 0.0):
+			if (bfloat_list == 0.0 and neg_zero == 1):
+				bfloat_binary_temp = "1"+"0"*31
+			elif (bfloat_list == 0.0):
 				bfloat_binary_temp = "0"*32
 			else:
 				bfloat_binary_temp = IEEE754(bfloat_list)
-		elif(fp32_in == inf):
+		elif(fp32_in >= inf and fp32_in != qnan and fp32_in != snan and fp32_in != nqnan and fp32_in != nsnan ):
 			bfloat_binary_temp = "0111111110000000"
-		elif(fp32_in == neg_inf):
+		elif(fp32_in == neg_inf and fp32_in != qnan and fp32_in != snan and fp32_in != nqnan and fp32_in != nsnan):
 			bfloat_binary_temp = "1111111110000000"
 		elif(fp32_in == qnan):
 			bfloat_binary_temp = "0111111111000001"
