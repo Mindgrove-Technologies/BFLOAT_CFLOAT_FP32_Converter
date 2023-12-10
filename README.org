@@ -145,9 +145,9 @@ All reference models used in functionally verifying the implemented modules are 
 
 **** FP32 -> CFLOAT8
 
-Inputs: FP32 and integer bias
+Inputs: FP32, integer bias and Negative_Zero Flag
 
-Outputs: CFLOAT8 Binary
+Output: CFLOAT8 Binary
 
 This repository contains custom made reference model using python. The model accepts a float number (fp32) and a integer bias. A dictionary of all possible normal numbers  and denormal numbers of the cfloat8 system for the given bias is generated. The dictionary for normal numbers uses the exponent value as key field and the value field is a list populated with the values for each possbile mantissa. The dictionary for denormal has the mantissa value as key field and the corresponding denormal number as the value field.
 
@@ -159,16 +159,38 @@ This reference also supports preserving sign bit for zeroes. This is done by acc
 
 **** CFLOAT8 -> FP32
 
-Inputs: CFLOAT8 number and bias
+Inputs: CFLOAT8 number, integer bias and Negative_Zero Flag
 
-Outputs: FP32 Binary
+Output: FP32 Binary
 
 This repository contains custom made reference model using python. The model accepts a float number (cfloat8) and a integer bias. A dictionary of all possible normal numbers  and denormal numbers of the cfloat8 system for the given bias is generated. The dictionary for normal numbers uses the exponent value as key field and the value field is a list populated with the values for each possbile mantissa. The dictionary for denormal has the mantissa value as key field and the corresponding denormal number as the value field.
 
 If the given cfloat8 number does not match with the dictionary values , then an error is generated mentioning the given cfloat8 number is not a valid input. As the cfloat8 precision is lower than fp32, the cfloat8 inputs can directly be represented in fp32 space, and as such the cfloat8 input if a valid number is directly converted to fp32 binary and returned.
 
-
 This reference also supports preserving sign bit for zeroes. This is done by accepting another input =neg_zero= that determines if the given input is a negative zero.
+
+**** FP32 -> BFLOAT16
+
+Inputs  : 32-bit FP Number, and Negative_Zero Flag
+
+Output : 16-bit BFLOAT16 Binary
+
+The designed reference model for FP32 to Bfloat16 conversion uses PyTorch. At first, the input FP32 number will be converted to the BFLOAT16 number using the pytorch library. Then, the BFLOAT16 number is converted to the IEEE format binary, which will produce first 16-bits worth of number, and next 16-bits zeros.
+
+Now, the first 16 bits is stored in a variable for bfloat-binary, and it will get returned. For testing, the Negative Zeros, the reference model gets another input called neg_zero which will be used to generate the negative zero value using the reference model, since no such functionality is availabe in pytorch library. For Over-Flow and underflow, the Maximum and Minimum values of FP32 are taken, then given as input. If the condition gets satisfied, then the BFLOAT will return Infinity if overflow, and returns signed zero if underflow.
+
+Both SNaN and QNaN are supported. Since there is no function to check nans are available in pytorch, we have got the exact numerical values of them, and when the input equals nan, then the NaN are returned in BFLOAT format respctively.
+
+**** BFLOAT16 -> FP32
+
+Inputs  : 16-bit BFLOAT Number, and Negative_Zero Flag
+Output  : 32-bit FP32 Binary
+
+The designed reference model for BFLOAT16 to FP32 conversion uses PyTorch. At first, the input BFLOAT16 number will be converted to the FP32 number using the pytorch library. Then, the FP32 number is converted to the IEEE format 32-bit binary.
+
+Now, the Floating Point Binary will get returned for normal numbers. For testing, the Negative Zeros, the reference model gets another input called neg_zero which will be used to generate the negative zero value using the reference model, since no such functionality is availabe in pytorch library. For Over-Flow and underflow, the Maximum and Minimum values of BFLOAT16 are taken, then given as input. If the input is greater than overflow, then the FP32 will return Infinity, and returns signed zero if underflow. If the input is equal to the largest bfloat number, then the exact value will get returned in FP32 Binary.
+
+Both SNaN and QNaN are supported. Since there is no function to check nans are available in pytorch, we have got the exact numerical values of them, and when the input equals nan, then the NaN are returned in FP32 format respctively.
 
 *** Testbenches
 
@@ -185,11 +207,73 @@ All the testbenches written are python-cocotb testbenches. These testbench files
 
 **** FP32 -> CFLOAT8
 
-The random fp32 inputs are generated using numpy python package. The input bias is also randomly generated using python random package. The following tests are written in the testbench.
-
-[[./images/fp32cfloat152.png]]
+The random fp32 inputs are generated using numpy python package. The input bias is also randomly generated using python random package. The input number is provided to reference model and binary representation of the number is provided to DUT
 
 
+The following tests are written in the testbench.
+
+| Tests                                    |
+|------------------------------------------|
+| test_zero_for_all_bias                   |
+| test_positive_overflow                   |
+| test_negative_overflow                   |
+| test_positive_underflow                  |
+| test_negative_underflow                  |
+| test_positive_normal_numbers_single_bias |
+| test_positive_normal_numbers_all_bias    |
+| test_negative_normal_numbers_single_bias |
+| test_negative_normal_numbers_all_bias    |
+
+
+
+**** CFLOAT8 -> FP32
+
+The random cfloat8 normal numbers are generated using the formula =(-1)^{sign} x 2^{exponent - bias} x 1.M_{1}M_{0}= and denormal numbers with the formula =(-1)^{sign} x 2^{-bias} X 0.M_{1}M_{0}= . The input number is provided to reference model and binary representation of the number is provided to DUT
+
+| tests                                      |
+|--------------------------------------------|
+| test_all_zero                              |
+| test_positive_normal_numbers_single_bias   |
+| test_negative_normal_numbers_single_bias   |
+| test_positive_denormal_numbers_single_bias |
+| test_negative_denormal_numbers_single_bias |
+
+**** FP32 -> BFLOAT16
+
+The random Inputs for Normal Numbers, Negative Numbers are generated using the torch.rand() function available in the pytorch library.
+
+
+| tests                           |
+|---------------------------------|
+| custom_numbers_test             |
+| normal_numbers_test             |
+| negative_numbers_test           |
+| overflow_numbers_test           |
+| underflow_numbers_test          |
+| negative_overflow_numbers_test  |
+| negative_underflow_numbers_test |
+| qnan_test                       |
+| snan_test                       |
+| negative_qnan_test              |
+| negative_snan_test              |
+| zero_test                       |
+
+**** BFLOAT16 -> FP32
+
+The random Inputs for Normal Numbers, Negative Numbers are generated using the torch.rand() function available in the pytorch library.
+
+| tests                           |
+|---------------------------------|
+| custom_numbers_test             |
+| normal_numbers_test             |
+| negative_numbers_test           |
+| overflow_numbers_test           |
+| underflow_numbers_test          |
+| qnan_test                       |
+| snan_test                       |
+| negative_qnan_test              |
+| negative_snan_test              |
+| zero_test                       |
 
 
 
