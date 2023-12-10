@@ -230,7 +230,7 @@ async def test_negative_underflow(dut):
     bias = random.randint(0, 63)
 
 
-    size = 10
+    size = 10000
     low_limit = 0.0
     high_limit = -((2**(1-bias)) * 1)
     np_fp32 = generate_random_fp32 (size,low_limit,high_limit)
