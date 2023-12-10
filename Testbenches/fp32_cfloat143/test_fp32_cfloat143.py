@@ -1,3 +1,8 @@
+'''**********************************************
+ Author: Rohit Srinivas R G, M Kapil Shyam
+ Email: CS23Z002@smail.iitm.ac.in, CS23Z064@smail.iitm.ac.in
+**********************************************'''
+
 from pydoc import allmethods
 import sys
 from time import clock_getres

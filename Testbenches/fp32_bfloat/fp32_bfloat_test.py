@@ -1,3 +1,8 @@
+'''**********************************************
+ Author: Rohit Srinivas R G, M Kapil Shyam
+ Email: CS23Z002@smail.iitm.ac.in, CS23Z064@smail.iitm.ac.in
+**********************************************'''
+
 import torch
 import sys
 sys.path.append('../../reference_model')
@@ -368,7 +373,7 @@ async def qnan_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
-		output_rm = await tb.model(fp32_inp)
+		output_rm = await tb.model(fp32_inp,0)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -428,7 +433,7 @@ async def negative_qnan_test(dut):
 	for i in range(elemns):
 		await tb.cycle_reset()
 		await tb.input_fp32(float_list_binary[i])
-		output_rm = await tb.model(fp32_inp)
+		output_rm = await tb.model(fp32_inp,1)
 		output_dut = await tb.get_bfloat()
 
 		tb.compare(float_list_binary[i],output_dut,output_rm)
@@ -470,7 +475,7 @@ async def negative_snan_test(dut):
 async def zero_test(dut):
 	tb=TB(dut)
 
-	elemns = 100000
+	elemns = 10
 	fp32_inp = torch.rand(elemns, dtype=torch.float32)*0
 
 	fp32_input = fp32_inp.float()
