@@ -133,7 +133,7 @@ When converting bfloat16 zeroes to fp32 zeroes the sign bit is preserved.
 
 * VERIFICATION
 
-*** Reference Model
+** Reference Model
 
 All reference models used in functionally verifying the implemented modules are present in =./reference_model=
 
@@ -146,7 +146,7 @@ All reference models used in functionally verifying the implemented modules are 
 | cfloat8 1_4_3 -> fp32 | cfloat143_fp32.py |
 | bfloat16      -> fp32 | bfloat16_fp32.py  |
 
-**** FP32 -> CFLOAT8
+*** FP32 -> CFLOAT8
 
 Inputs: FP32, integer bias and Negative_Zero Flag
 
@@ -160,7 +160,7 @@ Once there is a search hit within the dictionary or if the rounding has taken pl
 
 This reference also supports preserving sign bit for zeroes. This is done by accepting another input =neg_zero= that determines if the given input is a negative zero.
 
-**** CFLOAT8 -> FP32
+*** CFLOAT8 -> FP32
 
 Inputs: CFLOAT8 number, integer bias and Negative_Zero Flag
 
@@ -172,7 +172,7 @@ If the given cfloat8 number does not match with the dictionary values , then an 
 
 This reference also supports preserving sign bit for zeroes. This is done by accepting another input =neg_zero= that determines if the given input is a negative zero.
 
-**** FP32 -> BFLOAT16
+*** FP32 -> BFLOAT16
 
 Inputs  : 32-bit FP Number, and Negative_Zero Flag
 
@@ -184,7 +184,7 @@ Now, the first 16 bits is stored in a variable for bfloat-binary, and it will ge
 
 Both SNaN and QNaN are supported. Since there is no function to check nans are available in pytorch, we have got the exact numerical values of them, and when the input equals nan, then the NaN are returned in BFLOAT format respctively.
 
-**** BFLOAT16 -> FP32
+*** BFLOAT16 -> FP32
 
 Inputs  : 16-bit BFLOAT Number, and Negative_Zero Flag
 Output  : 32-bit FP32 Binary
@@ -195,7 +195,7 @@ Now, the Floating Point Binary will get returned for normal numbers. For testing
 
 Both SNaN and QNaN are supported. Since there is no function to check nans are available in pytorch, we have got the exact numerical values of them, and when the input equals nan, then the NaN are returned in FP32 format respctively.
 
-*** Testbenches
+** Testbenches
 
 All the testbenches written are python-cocotb testbenches. These testbench files are present in =./Testbenches/= . The cocotb-testbench are organised into folder of the module names and each folder contains the testbench itself and a makefile to run the test.
 
@@ -208,7 +208,7 @@ All the testbenches written are python-cocotb testbenches. These testbench files
 | cfloat8 1_4_3 -> fp32 | ./Testbenches/cfloat143_fp32/test_cfloat143_fp32.py |
 | bfloat16      -> fp32 | ./Testbenches/bfloat_fp32/bfloat_fp32_test.py       |
 
-**** FP32 -> CFLOAT8
+*** FP32 -> CFLOAT8
 
 The random fp32 inputs are generated using numpy python package. The input bias is also randomly generated using python random package. The input number is provided to reference model and binary representation of the number is provided to DUT
 
@@ -229,7 +229,7 @@ The following tests are written in the testbench.
 
 
 
-**** CFLOAT8 -> FP32
+*** CFLOAT8 -> FP32
 
 The random cfloat8 normal numbers are generated using the formula (-1)^{sign} x 2^{exponent - bias} x 1.M_{1}M_{0} and denormal numbers with the formula (-1)^{sign} x 2^{-bias} X 0.M_{1}M_{0} . The input number is provided to reference model and binary representation of the number is provided to DUT
 
@@ -241,7 +241,7 @@ The random cfloat8 normal numbers are generated using the formula (-1)^{sign} x 
 | test_positive_denormal_numbers_single_bias |
 | test_negative_denormal_numbers_single_bias |
 
-**** FP32 -> BFLOAT16
+*** FP32 -> BFLOAT16
 
 The random Inputs for Normal Numbers, Negative Numbers are generated using the torch.rand() function available in the pytorch library.
 
@@ -261,7 +261,7 @@ The random Inputs for Normal Numbers, Negative Numbers are generated using the t
 | negative_snan_test              |
 | zero_test                       |
 
-**** BFLOAT16 -> FP32
+*** BFLOAT16 -> FP32
 
 The random Inputs for Normal Numbers, Negative Numbers are generated using the torch.rand() function available in the pytorch library.
 
