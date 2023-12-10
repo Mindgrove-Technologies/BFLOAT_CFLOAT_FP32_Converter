@@ -1,3 +1,8 @@
+'''**********************************************
+ Author: Rohit Srinivas R G, M Kapil Shyam
+ Email: CS23Z002@smail.iitm.ac.in, CS23Z064@smail.iitm.ac.in
+**********************************************'''
+
 import torch
 
 
@@ -135,8 +140,19 @@ def convert_ieee_to_real(fp32_binary):
 
 	return real_no
 
+import struct
 
-def convert_bfloat16_fp32(bfloat_in):
+def float_to_binary(num):
+    # Convert the float number to IEEE 754 binary representation
+    packed = struct.pack('>f', num)
+    # Unpack the binary representation to get the bytes
+    unpacked = struct.unpack('>I', packed)[0]
+    # Convert the integer to its binary representation
+    binary = bin(unpacked)[2:].zfill(32)  # 32 bits for single precision float
+    return binary
+
+
+def convert_bfloat16_fp32(bfloat_in,neg_zero):
 
 
 	inf = 3.3895313892515355e+38
@@ -145,8 +161,8 @@ def convert_bfloat16_fp32(bfloat_in):
 	nqnan = -5.130820063729775e+38
 	snan = 3.429408229125083e+38
 	nsnan = -3.429408229125083e+38
-	underflow = 5.900429927501703e-39
-	neg_underflow = -5.900429927501703e-39
+	underflow = 1.17549435082e-38
+	neg_underflow = -1.17549435082e-38
 
 	if (bfloat_in != qnan and bfloat_in != snan and bfloat_in != nqnan and bfloat_in != nsnan):
 		fp32_val = bfloat_in.float()
@@ -156,15 +172,19 @@ def convert_bfloat16_fp32(bfloat_in):
 
 	# print("BFLOAT Val:")
 	# print(fp32_list)
+	# print("FP32_bin")
+	# print(float_to_binary(fp32_list))
 	for i in range(1):
-		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in != inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in != neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
-			if (fp32_list == 0.0):
+		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in < inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in > neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
+			if (fp32_list == 0.0 and neg_zero == 1):
+				fp32_binary_temp = "1"+"0"*31
+			elif (fp32_list == 0.0):
 				fp32_binary_temp = "0"*32
 			else:
-				fp32_binary_temp = IEEE754(fp32_list)
-		elif(bfloat_in == inf):
+				fp32_binary_temp = float_to_binary(fp32_list)
+		elif(bfloat_in > inf and bfloat_in != qnan and bfloat_in != snan and bfloat_in != nqnan and bfloat_in != nsnan):
 			fp32_binary_temp = "01111111100000000000000000000000"
-		elif(bfloat_in == neg_inf):
+		elif(bfloat_in < neg_inf and bfloat_in != qnan and bfloat_in != snan and bfloat_in != nqnan and bfloat_in != nsnan):
 			fp32_binary_temp = "11111111100000000000000000000000"
 		elif(bfloat_in == qnan):
 			fp32_binary_temp = "01111111110000000000000000000001"
@@ -174,15 +194,15 @@ def convert_bfloat16_fp32(bfloat_in):
 			fp32_binary_temp = "11111111110000000000000000000001"
 		elif(bfloat_in == nsnan):
 			fp32_binary_temp = "11111111100000000000000000000001"
-		elif(bfloat_in <= underflow and bfloat_in > neg_underflow):
+		elif(bfloat_in < underflow and bfloat_in > neg_underflow and bfloat_in != qnan and bfloat_in != snan and bfloat_in != nqnan and bfloat_in != nsnan):
 			fp32_binary_temp = "00000000000000000000000000000000"
-		elif(bfloat_in <= neg_underflow):
+		elif(bfloat_in < neg_underflow and bfloat_in != qnan and bfloat_in != snan and bfloat_in != nqnan and bfloat_in != nsnan):
 			fp32_binary_temp = "10000000000000000000000000000000"
 		else:
 			# fp32_binary = IEEE754(fp32_list)
-			fp32_binary_temp = IEEE754(fp32_list)
+			fp32_binary_temp = float_to_binary(fp32_list)
 		
-		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in != inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in != neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
+		if(bfloat_in != (qnan) and bfloat_in != (snan) and bfloat_in < inf and bfloat_in != underflow and bfloat_in != neg_underflow and bfloat_in > neg_inf and bfloat_in != nqnan and bfloat_in != nsnan):
 			fp32_binary = fp32_binary_temp[0:16]+"0"*16
 		else:
 			fp32_binary = fp32_binary_temp
