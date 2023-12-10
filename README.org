@@ -11,6 +11,9 @@
   - [[#bfloat16---fp32][BFLOAT16 -> FP32]]
 - [[#verification][VERIFICATION]]
 - [[#testing][TESTING]]
+  - [[#generating-verilog][Generating verilog]]
+  - [[#running-tests][Running Tests]]
+  - [[#results-of-verification][Results of verification]]
 
 * DESCRIPTION
 
@@ -228,7 +231,7 @@ The following tests are written in the testbench.
 
 **** CFLOAT8 -> FP32
 
-The random cfloat8 normal numbers are generated using the formula =(-1)^{sign} x 2^{exponent - bias} x 1.M_{1}M_{0}= and denormal numbers with the formula =(-1)^{sign} x 2^{-bias} X 0.M_{1}M_{0}= . The input number is provided to reference model and binary representation of the number is provided to DUT
+The random cfloat8 normal numbers are generated using the formula (-1)^{sign} x 2^{exponent - bias} x 1.M_{1}M_{0} and denormal numbers with the formula (-1)^{sign} x 2^{-bias} X 0.M_{1}M_{0} . The input number is provided to reference model and binary representation of the number is provided to DUT
 
 | tests                                      |
 |--------------------------------------------|
@@ -278,3 +281,51 @@ The random Inputs for Normal Numbers, Negative Numbers are generated using the t
 
 
 * TESTING
+
+** Generating verilog
+
+To generate verilog, enter the following command in the repository parent directory
+
+#+begin_src bash
+$ make verilog
+
+#+end_src
+
+The verilog files are generated in =./verilog_dir/=
+
+** Running Tests
+
+| Test                  | Command                    |
+|-----------------------+----------------------------|
+| fp32 -> cfloat8 1_5_2 | ~make test_fp32_cfloat152~ |
+| fp32 -> cfloat8 1_4_3 | ~make test_fp32_cfloat143~ |
+| fp32 -> bfloat16      | ~make test_fp32_bfloat~    |
+| cfloat8 1_5_2 -> fp32 | ~make test_cfloat152_fp32~ |
+| cfloat8 1_4_3 -> fp32 | ~make test_cfloat143_fp32~ |
+| bfloat16      -> fp32 | ~make test_bfloat_fp32~    |
+
+** Results of verification
+
+*** FP32 -> CFLOAT8 1_5_2
+
+[[./images/fp32_cfloat152.png]]
+
+*** FP32 -> CFLOAT8 1_4_3
+
+[[./images/fp32_cfloat143.png]]
+
+*** FP32 -> BFLOAT16
+
+[[./images/fp32_bfloat.png]]
+
+*** CFLOAT8 1_5_2 -> FP32
+
+[[./images/cfloat152_fp32.png]]
+
+*** CFLOAT8 1_4_3 -> FP32
+
+[[./images/cfloat143_fp32.png]]
+
+*** BFLOAT16 -> FP32
+
+[[./images/bfloat_fp32.png]]
