@@ -1,8 +1,280 @@
 #+TITLE: FP Convertor Modules
-#+AUTHOR: Rohit Srinivas R G, M Kapil Shyam
+#+AUTHOR: Rohit Srinivas R G (CS23Z002), M Kapil Shyam (CS23Z064)
 
-* Description
-This repository consists of the following convertor modules 
-- fp32 to/from bfloat16
-- fp32 to/from cfloat8 1_4_3
-- fp32 to/from cfloat8 1_5_2
+* TABLE OF CONTENT :TOC_2:
+- [[#description][DESCRIPTION]]
+- [[#repository-structure][REPOSITORY STRUCTURE]]
+- [[#design][DESIGN]]
+  - [[#fp32---cfloat8][FP32 -> CFLOAT8]]
+  - [[#cfloat8---fp32][CFLOAT8 -> FP32]]
+  - [[#fp32---bfloat16][FP32 -> BFLOAT16]]
+  - [[#bfloat16---fp32][BFLOAT16 -> FP32]]
+- [[#verification][VERIFICATION]]
+- [[#testing][TESTING]]
+
+* DESCRIPTION
+
+This project is undertaken as part of project work for the course CS6230 CAD FOR VLSI, IITM. This repository consists of the following modules written in Bluepsec System Verilog.
+
+- fp32 to bfloat16
+- fp32 to cfloat8 1_4_3
+- fp32 to cfloat8 1_5_2
+- cfloat8 1_5_2 to fp32
+- cfloat8 1_4_3 to fp32
+- bfloat16      to fp32
+
+* REPOSITORY STRUCTURE
+#+begin_src
+.
+├── doc/                  [Contains the reference document for modules]
+├── fp32_bfloat16/        [Contains the src code for fp32_bfloat16 conversions]
+├── fp32_cfloat8/         [Contains the src code for fp32_cfloat8 conversions]
+├── Makefile              [Master Makefile to perform actions]
+├── README.org
+├── reference_model/      [Contains the reference model used for verfications]
+├── Testbench.bsv         [Bluespec Testbench to import all the modules]
+└── Testbenches/          [Directory consisting of cocotb-testbenches]
+    ├── bfloat_fp32       [Contains cocotb-testbenche for bfloat16 to fp32 conversion]
+    ├── cfloat143_fp32    [Contains cocotb-testbenche for cfloat143 to fp32 conversion]
+    ├── cfloat152_fp32    [Contains cocotb-testbenche for cfloat152 to fp32 conversion]
+    ├── fp32_bfloat       [Contains cocotb-testbenche for fp32 to bfloat16 conversion]
+    ├── fp32_cfloat143    [Contains cocotb-testbenche for fp32 to cfloat143 conversion]
+    └── fp32_cfloat152    [Contains cocotb-testbenche for fp32 to cfloat152 conversion]
+
+#+end_src
+
+* DESIGN
+
+The source files for the following implemented modules are given in the table below
+
+| Modules                | Location                                |
+|------------------------+-----------------------------------------|
+| FP32 <=> CFLOAT8 1_5_2 | ./fp32_cfloat8/fp32_cfloat152.bsv       |
+| FP32 <=> CFLOAT8 1_4_2 | ./fp32_cfloat8/fp32_cfloat143.bsv       |
+| FP32 <=> BFLOAT16      | ./fp32_bfloat16/fp32_bfloat16_types.bsv |
+
+*./fp32_cfloat8/fp32_cfloat8/fp32_cfloat8_types.bsv* - Contains the structure element and other typedefs used in the fp32 to cfloat8 source code
+*./fp32_cfloat8/fp32_bfloat16/fp32_bfloat16_types.bsv* - Contains the structure element and other typedefs used in the fp32 to bfloat16 source code
+
+** FP32 -> CFLOAT8
+
+Required Inputs  : *32-bit FP Number* and *bias*
+
+Generated Output : *8-bit CFLOAT152 Binary 1_4_3 & 1_5_2*
+
+*** Supports Overflow mechanism
+
+If the given *input 32-bit number is greater than the largest representable normal number* for the *given bias* an overflow condtion is triggered, this implementation sets the output that largest representable normal number for the given bias.
+
+*** Supports Gradual Underflow with denormal/subnormal handling
+
+If the given *input 32-bit number is lesser than smallest representable normal number* for the *given bias* an underflow condtion is triggered. this implementation supports gradual underflow with denormal handling. This allows the underflow numbers to be mapped to denormal numbers. Excluding 0 mantissa we can try to represent underflow numbers with denormal numbers [3 for cfloat152 and 7 for cfloat143]. If the given number does not exactly map with the denormal numbers , then round to nearest is used to set the output.
+
+*** Supports round-to-nearest rounding mechanism but *does not support stochastic rounding*
+
+The rounding mechanism deployed here round-to-nearest, which works in the following way. Assuming the given number is between two float number that are representable in cfloat binary space [for eg 2 , 2.5]. If the given number is greater than or equal ~(lesser_num + difference of two numbers/2)~ then the digits are round to be represent as the larger number else the number is represented as smaller number. This technique is the same for both positive , negative numbers (only the magnitude is taken for rounding computation) as well as the gradual underflow mechanism.
+
+#+begin_center
+
+In the given example 2, 2.5
+if the input >= 2.25, then the rounded output will be 2.5
+if the input <  2.24, then the rounded output will be 2
+
+#+end_center
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting fp32 zeroes to cfloat8 zeroes the sign bit is preserved.
+
+** CFLOAT8 -> FP32
+
+Required Inputs  : *8-bit CFLOAT152 Binary 1_4_3 (or) 1_5_2* and *bias*
+
+Generated Output : *32-bit FP Number*
+
+CFLOAT8 (8-bit) is a lower precision system when compared to FP32(32-bit). All representable cfloat numbers can be directly represented as normal numbers in the Single Precision space.
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting cfloat8 zeroes to fp32 zeroes the sign bit is preserved.
+
+** FP32 -> BFLOAT16
+
+Required Inputs  : *32-bit FP Number*
+
+Generated Output : *16-bit BFLOAT16 1:sign 8:exponent 7:mantissa*
+
+*** Supports Overflow mechanism
+
+As the exponent range of bfloat16 is same as FP32, the only case of overflow is due to extra mantissa bits supported in the FP32. The overflow condition sets the output to infinity
+
+*** Supports round-to-nearest-even rounding mechanism
+
+This implementation supports the IEEE standard round mechanism of round to nearest even. The objective is to solve for any contention when the given input lies between two possible values by representing it as the value which is even.
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting fp32 zeroes to bfloat16 zeroes the sign bit is preserved.
+
+** BFLOAT16 -> FP32
+
+Required Inputs  : *16-bit BFLOAT16 1:sign 8:exponent 7:mantissa*
+
+Generated Output : *32-bit FP Number*
+
+BFLOAT16 (16-bit) is a lower precision system when compared to FP32(32-bit). All representable bfloat numbers can be directly represented as normal numbers in the Single Precision space. The conversion mechanism is padding 16 zeroes to the mantissa of the given bfloat number and the output is 32-bit single precision Float.
+
+*** Preserves the sign bit when coverting zeroes
+
+When converting bfloat16 zeroes to fp32 zeroes the sign bit is preserved.
+
+* VERIFICATION
+
+*** Reference Model
+
+All reference models used in functionally verifying the implemented modules are present in =./reference_model=
+
+| Model                 | Filename          |
+|-----------------------+-------------------|
+| fp32 -> cfloat8 1_5_2 | fp32_cfloat152.py |
+| fp32 -> cfloat8 1_4_3 | fp32_cfloat143.py |
+| fp32 -> bfloat16      | fp32_bfloat16.py  |
+| cfloat8 1_5_2 -> fp32 | cfloat152_fp32.py |
+| cfloat8 1_4_3 -> fp32 | cfloat143_fp32.py |
+| bfloat16      -> fp32 | bfloat16_fp32.py  |
+
+**** FP32 -> CFLOAT8
+
+Inputs: FP32, integer bias and Negative_Zero Flag
+
+Output: CFLOAT8 Binary
+
+This repository contains custom made reference model using python. The model accepts a float number (fp32) and a integer bias. A dictionary of all possible normal numbers  and denormal numbers of the cfloat8 system for the given bias is generated. The dictionary for normal numbers uses the exponent value as key field and the value field is a list populated with the values for each possbile mantissa. The dictionary for denormal has the mantissa value as key field and the corresponding denormal number as the value field.
+
+The given fp32 input is checked against the values in the dictionary for both normal and denormal numbers considering the overflow,zero & underflow cases. If the exact match is not found , but the given number can represented by either rounding up or down , then the rounding mechanism round-to-nearest is used to get the output.
+
+Once there is a search hit within the dictionary or if the rounding has taken place, the corresponding sign, exponent & mantissa values are stored. The Binary for CFLOAT8 is generated using the stored sign, exponent and mantissa values and returned.
+
+This reference also supports preserving sign bit for zeroes. This is done by accepting another input =neg_zero= that determines if the given input is a negative zero.
+
+**** CFLOAT8 -> FP32
+
+Inputs: CFLOAT8 number, integer bias and Negative_Zero Flag
+
+Output: FP32 Binary
+
+This repository contains custom made reference model using python. The model accepts a float number (cfloat8) and a integer bias. A dictionary of all possible normal numbers  and denormal numbers of the cfloat8 system for the given bias is generated. The dictionary for normal numbers uses the exponent value as key field and the value field is a list populated with the values for each possbile mantissa. The dictionary for denormal has the mantissa value as key field and the corresponding denormal number as the value field.
+
+If the given cfloat8 number does not match with the dictionary values , then an error is generated mentioning the given cfloat8 number is not a valid input. As the cfloat8 precision is lower than fp32, the cfloat8 inputs can directly be represented in fp32 space, and as such the cfloat8 input if a valid number is directly converted to fp32 binary and returned.
+
+This reference also supports preserving sign bit for zeroes. This is done by accepting another input =neg_zero= that determines if the given input is a negative zero.
+
+**** FP32 -> BFLOAT16
+
+Inputs  : 32-bit FP Number, and Negative_Zero Flag
+
+Output : 16-bit BFLOAT16 Binary
+
+The designed reference model for FP32 to Bfloat16 conversion uses PyTorch. At first, the input FP32 number will be converted to the BFLOAT16 number using the pytorch library. Then, the BFLOAT16 number is converted to the IEEE format binary, which will produce first 16-bits worth of number, and next 16-bits zeros.
+
+Now, the first 16 bits is stored in a variable for bfloat-binary, and it will get returned. For testing, the Negative Zeros, the reference model gets another input called neg_zero which will be used to generate the negative zero value using the reference model, since no such functionality is availabe in pytorch library. For Over-Flow and underflow, the Maximum and Minimum values of FP32 are taken, then given as input. If the condition gets satisfied, then the BFLOAT will return Infinity if overflow, and returns signed zero if underflow.
+
+Both SNaN and QNaN are supported. Since there is no function to check nans are available in pytorch, we have got the exact numerical values of them, and when the input equals nan, then the NaN are returned in BFLOAT format respctively.
+
+**** BFLOAT16 -> FP32
+
+Inputs  : 16-bit BFLOAT Number, and Negative_Zero Flag
+Output  : 32-bit FP32 Binary
+
+The designed reference model for BFLOAT16 to FP32 conversion uses PyTorch. At first, the input BFLOAT16 number will be converted to the FP32 number using the pytorch library. Then, the FP32 number is converted to the IEEE format 32-bit binary.
+
+Now, the Floating Point Binary will get returned for normal numbers. For testing, the Negative Zeros, the reference model gets another input called neg_zero which will be used to generate the negative zero value using the reference model, since no such functionality is availabe in pytorch library. For Over-Flow and underflow, the Maximum and Minimum values of BFLOAT16 are taken, then given as input. If the input is greater than overflow, then the FP32 will return Infinity, and returns signed zero if underflow. If the input is equal to the largest bfloat number, then the exact value will get returned in FP32 Binary.
+
+Both SNaN and QNaN are supported. Since there is no function to check nans are available in pytorch, we have got the exact numerical values of them, and when the input equals nan, then the NaN are returned in FP32 format respctively.
+
+*** Testbenches
+
+All the testbenches written are python-cocotb testbenches. These testbench files are present in =./Testbenches/= . The cocotb-testbench are organised into folder of the module names and each folder contains the testbench itself and a makefile to run the test.
+
+| Modules               | Testbench                                           |
+|-----------------------+-----------------------------------------------------|
+| fp32 -> cfloat8 1_5_2 | ./Testbenches/fp32_cfloat152/test_fp32_cfloat152.py |
+| fp32 -> cfloat8 1_4_3 | ./Testbenches/fp32_cfloat143/test_fp32_cfloat143.py |
+| fp32 -> bfloat16      | ./Testbenches/fp32_bfloat/fp32_bfloat_test.py       |
+| cfloat8 1_5_2 -> fp32 | ./Testbenches/cfloat152_fp32/test_cfloat152_fp32.py |
+| cfloat8 1_4_3 -> fp32 | ./Testbenches/cfloat143_fp32/test_cfloat143_fp32.py |
+| bfloat16      -> fp32 | ./Testbenches/bfloat_fp32/bfloat_fp32_test.py       |
+
+**** FP32 -> CFLOAT8
+
+The random fp32 inputs are generated using numpy python package. The input bias is also randomly generated using python random package. The input number is provided to reference model and binary representation of the number is provided to DUT
+
+
+The following tests are written in the testbench.
+
+| Tests                                    |
+|------------------------------------------|
+| test_zero_for_all_bias                   |
+| test_positive_overflow                   |
+| test_negative_overflow                   |
+| test_positive_underflow                  |
+| test_negative_underflow                  |
+| test_positive_normal_numbers_single_bias |
+| test_positive_normal_numbers_all_bias    |
+| test_negative_normal_numbers_single_bias |
+| test_negative_normal_numbers_all_bias    |
+
+
+
+**** CFLOAT8 -> FP32
+
+The random cfloat8 normal numbers are generated using the formula =(-1)^{sign} x 2^{exponent - bias} x 1.M_{1}M_{0}= and denormal numbers with the formula =(-1)^{sign} x 2^{-bias} X 0.M_{1}M_{0}= . The input number is provided to reference model and binary representation of the number is provided to DUT
+
+| tests                                      |
+|--------------------------------------------|
+| test_all_zero                              |
+| test_positive_normal_numbers_single_bias   |
+| test_negative_normal_numbers_single_bias   |
+| test_positive_denormal_numbers_single_bias |
+| test_negative_denormal_numbers_single_bias |
+
+**** FP32 -> BFLOAT16
+
+The random Inputs for Normal Numbers, Negative Numbers are generated using the torch.rand() function available in the pytorch library.
+
+
+| tests                           |
+|---------------------------------|
+| custom_numbers_test             |
+| normal_numbers_test             |
+| negative_numbers_test           |
+| overflow_numbers_test           |
+| underflow_numbers_test          |
+| negative_overflow_numbers_test  |
+| negative_underflow_numbers_test |
+| qnan_test                       |
+| snan_test                       |
+| negative_qnan_test              |
+| negative_snan_test              |
+| zero_test                       |
+
+**** BFLOAT16 -> FP32
+
+The random Inputs for Normal Numbers, Negative Numbers are generated using the torch.rand() function available in the pytorch library.
+
+| tests                           |
+|---------------------------------|
+| custom_numbers_test             |
+| normal_numbers_test             |
+| negative_numbers_test           |
+| overflow_numbers_test           |
+| underflow_numbers_test          |
+| qnan_test                       |
+| snan_test                       |
+| negative_qnan_test              |
+| negative_snan_test              |
+| zero_test                       |
+
+
+
+* TESTING
