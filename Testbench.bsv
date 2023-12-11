@@ -33,7 +33,7 @@ endinterface
 // (* synthesize *)
 // module mkTestbench (Ifc_Testbench);
 
-(* synthesize *)
+// (* synthesize *)
 module mkTestbench (Empty);
 
 `ifdef simulate_cfloat_152
