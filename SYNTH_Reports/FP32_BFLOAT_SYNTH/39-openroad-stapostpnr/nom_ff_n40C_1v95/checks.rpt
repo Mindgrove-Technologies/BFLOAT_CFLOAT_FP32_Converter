@@ -1,0 +1,86 @@
+
+===========================================================================
+report_checks -unconstrained
+===========================================================================
+======================= nom_ff_n40C_1v95 Corner ===================================
+
+Startpoint: _342_ (rising edge-triggered flip-flop clocked by CLK)
+Endpoint: bfloat16_out[1] (output port clocked by CLK)
+Path Group: CLK
+Path Type: max
+
+Fanout         Cap        Slew       Delay        Time   Description
+---------------------------------------------------------------------------------------------
+                                  0.000000    0.000000   clock CLK (rise edge)
+                                  0.000000    0.000000   clock source latency
+     1    0.018044    0.065059    0.044758    0.044758 ^ CLK (in)
+                                                         CLK (net)
+                      0.065087    0.000000    0.044758 ^ clkbuf_0_CLK/A (sky130_fd_sc_hd__clkbuf_16)
+     4    0.039710    0.045134    0.106133    0.150892 ^ clkbuf_0_CLK/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_0_CLK (net)
+                      0.045180    0.001072    0.151964 ^ clkbuf_2_3__f_CLK/A (sky130_fd_sc_hd__clkbuf_16)
+    11    0.033966    0.040906    0.097438    0.249402 ^ clkbuf_2_3__f_CLK/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_2_3__leaf_CLK (net)
+                      0.040954    0.000944    0.250346 ^ _342_/CLK (sky130_fd_sc_hd__dfxtp_1)
+     1    0.002947    0.030559    0.187927    0.438273 ^ _342_/Q (sky130_fd_sc_hd__dfxtp_1)
+                                                         net41 (net)
+                      0.030560    0.000067    0.438340 ^ output41/A (sky130_fd_sc_hd__buf_2)
+     1    0.034168    0.127908    0.136806    0.575146 ^ output41/X (sky130_fd_sc_hd__buf_2)
+                                                         bfloat16_out[1] (net)
+                      0.127914    0.000711    0.575857 ^ bfloat16_out[1] (out)
+                                              0.575857   data arrival time
+
+                                 15.000000   15.000000   clock CLK (rise edge)
+                                  0.000000   15.000000   clock network delay (propagated)
+                                 -0.250000   14.750000   clock uncertainty
+                                  0.000000   14.750000   clock reconvergence pessimism
+                                 -3.000000   11.750000   output external delay
+                                             11.750000   data required time
+---------------------------------------------------------------------------------------------
+                                             11.750000   data required time
+                                             -0.575857   data arrival time
+---------------------------------------------------------------------------------------------
+                                             11.174143   slack (MET)
+
+
+
+
+===========================================================================
+report_checks --slack_max -0.01
+============================================================================
+======================= nom_ff_n40C_1v95 Corner ===================================
+
+No paths found.
+
+
+===========================================================================
+ report_check_types -max_slew -max_cap -max_fanout -violators
+============================================================================
+======================= nom_ff_n40C_1v95 Corner ===================================
+
+max fanout
+
+Pin                                   Limit Fanout  Slack
+---------------------------------------------------------
+clkbuf_2_2__f_CLK/X                       6     15     -9 (VIOLATED)
+clkbuf_2_0__f_CLK/X                       6     13     -7 (VIOLATED)
+clkbuf_2_3__f_CLK/X                       6     11     -5 (VIOLATED)
+clkbuf_2_1__f_CLK/X                       6      9     -3 (VIOLATED)
+
+
+
+===========================================================================
+report_parasitic_annotation -report_unannotated
+============================================================================
+Found 0 unannotated drivers.
+Found 0 partially unannotated drivers.
+
+===========================================================================
+max slew violation count 0
+max fanout violation count 4
+max cap violation count 0
+============================================================================
+
+===========================================================================
+check_setup -verbose -unconstrained_endpoints -multiple_clock -no_clock -no_input_delay -loops -generated_clocks
+===========================================================================

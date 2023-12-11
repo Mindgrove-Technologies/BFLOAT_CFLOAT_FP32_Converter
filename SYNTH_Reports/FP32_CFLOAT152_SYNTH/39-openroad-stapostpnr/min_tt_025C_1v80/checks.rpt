@@ -1,0 +1,104 @@
+
+===========================================================================
+report_checks -unconstrained
+===========================================================================
+======================= min_tt_025C_1v80 Corner ===================================
+
+Startpoint: _386_ (rising edge-triggered flip-flop clocked by CLK)
+Endpoint: cfloat152_out[6] (output port clocked by CLK)
+Path Group: CLK
+Path Type: max
+
+Fanout         Cap        Slew       Delay        Time   Description
+---------------------------------------------------------------------------------------------
+                                  0.000000    0.000000   clock CLK (rise edge)
+                                  0.000000    0.000000   clock source latency
+     1    0.013975    0.068865    0.046884    0.046884 ^ CLK (in)
+                                                         CLK (net)
+                      0.068869    0.000000    0.046884 ^ clkbuf_0_CLK/A (sky130_fd_sc_hd__clkbuf_16)
+     2    0.019146    0.041128    0.133331    0.180215 ^ clkbuf_0_CLK/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_0_CLK (net)
+                      0.041128    0.000267    0.180482 ^ clkbuf_1_1__f_CLK/A (sky130_fd_sc_hd__clkbuf_16)
+    13    0.036639    0.056747    0.137789    0.318271 ^ clkbuf_1_1__f_CLK/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_1_1__leaf_CLK (net)
+                      0.056759    0.000601    0.318872 ^ _386_/CLK (sky130_fd_sc_hd__dfxtp_1)
+     1    0.003200    0.043954    0.306696    0.625568 ^ _386_/Q (sky130_fd_sc_hd__dfxtp_1)
+                                                         net26 (net)
+                      0.043954    0.000037    0.625606 ^ output26/A (sky130_fd_sc_hd__clkbuf_4)
+     1    0.034792    0.113843    0.185357    0.810963 ^ output26/X (sky130_fd_sc_hd__clkbuf_4)
+                                                         cfloat152_out[6] (net)
+                      0.113846    0.000477    0.811440 ^ cfloat152_out[6] (out)
+                                              0.811440   data arrival time
+
+                                 15.000000   15.000000   clock CLK (rise edge)
+                                  0.000000   15.000000   clock network delay (propagated)
+                                 -0.250000   14.750000   clock uncertainty
+                                  0.000000   14.750000   clock reconvergence pessimism
+                                 -3.000000   11.750000   output external delay
+                                             11.750000   data required time
+---------------------------------------------------------------------------------------------
+                                             11.750000   data required time
+                                             -0.811440   data arrival time
+---------------------------------------------------------------------------------------------
+                                             10.938560   slack (MET)
+
+
+
+
+===========================================================================
+report_checks --slack_max -0.01
+============================================================================
+======================= min_tt_025C_1v80 Corner ===================================
+
+No paths found.
+
+
+===========================================================================
+ report_check_types -max_slew -max_cap -max_fanout -violators
+============================================================================
+======================= min_tt_025C_1v80 Corner ===================================
+
+max fanout
+
+Pin                                   Limit Fanout  Slack
+---------------------------------------------------------
+clkbuf_1_0__f_CLK/X                       6     13     -7 (VIOLATED)
+clkbuf_1_1__f_CLK/X                       6     13     -7 (VIOLATED)
+
+
+
+===========================================================================
+report_parasitic_annotation -report_unannotated
+============================================================================
+Found 20 unannotated drivers.
+ fp32_in_fp_in[0]
+ fp32_in_fp_in[10]
+ fp32_in_fp_in[11]
+ fp32_in_fp_in[12]
+ fp32_in_fp_in[13]
+ fp32_in_fp_in[14]
+ fp32_in_fp_in[15]
+ fp32_in_fp_in[16]
+ fp32_in_fp_in[17]
+ fp32_in_fp_in[18]
+ fp32_in_fp_in[19]
+ fp32_in_fp_in[1]
+ fp32_in_fp_in[2]
+ fp32_in_fp_in[3]
+ fp32_in_fp_in[4]
+ fp32_in_fp_in[5]
+ fp32_in_fp_in[6]
+ fp32_in_fp_in[7]
+ fp32_in_fp_in[8]
+ fp32_in_fp_in[9]
+Found 0 partially unannotated drivers.
+
+===========================================================================
+max slew violation count 0
+max fanout violation count 2
+max cap violation count 0
+============================================================================
+
+===========================================================================
+check_setup -verbose -unconstrained_endpoints -multiple_clock -no_clock -no_input_delay -loops -generated_clocks
+===========================================================================

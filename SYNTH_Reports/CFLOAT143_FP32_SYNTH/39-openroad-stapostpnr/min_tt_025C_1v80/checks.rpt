@@ -1,0 +1,125 @@
+
+===========================================================================
+report_checks -unconstrained
+===========================================================================
+======================= min_tt_025C_1v80 Corner ===================================
+
+Startpoint: _298_ (rising edge-triggered flip-flop clocked by CLK)
+Endpoint: get_fp32[27] (output port clocked by CLK)
+Path Group: CLK
+Path Type: max
+
+Fanout         Cap        Slew       Delay        Time   Description
+---------------------------------------------------------------------------------------------
+                                  0.000000    0.000000   clock CLK (rise edge)
+                                  0.000000    0.000000   clock source latency
+     1    0.016336    0.079395    0.054324    0.054324 ^ CLK (in)
+                                                         CLK (net)
+                      0.079403    0.000000    0.054324 ^ clkbuf_0_CLK/A (sky130_fd_sc_hd__clkbuf_16)
+     2    0.019192    0.041181    0.137266    0.191590 ^ clkbuf_0_CLK/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_0_CLK (net)
+                      0.041181    0.000212    0.191802 ^ clkbuf_1_0__f_CLK/A (sky130_fd_sc_hd__clkbuf_16)
+    15    0.043900    0.063233    0.143161    0.334963 ^ clkbuf_1_0__f_CLK/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_1_0__leaf_CLK (net)
+                      0.063247    0.000707    0.335671 ^ _298_/CLK (sky130_fd_sc_hd__dfxtp_1)
+     1    0.002701    0.040016    0.305534    0.641204 ^ _298_/Q (sky130_fd_sc_hd__dfxtp_1)
+                                                         net23 (net)
+                      0.040016    0.000025    0.641230 ^ output23/A (sky130_fd_sc_hd__clkbuf_4)
+     1    0.034463    0.112886    0.183358    0.824588 ^ output23/X (sky130_fd_sc_hd__clkbuf_4)
+                                                         get_fp32[27] (net)
+                      0.112887    0.000285    0.824873 ^ get_fp32[27] (out)
+                                              0.824873   data arrival time
+
+                                 15.000000   15.000000   clock CLK (rise edge)
+                                  0.000000   15.000000   clock network delay (propagated)
+                                 -0.250000   14.750000   clock uncertainty
+                                  0.000000   14.750000   clock reconvergence pessimism
+                                 -3.000000   11.750000   output external delay
+                                             11.750000   data required time
+---------------------------------------------------------------------------------------------
+                                             11.750000   data required time
+                                             -0.824873   data arrival time
+---------------------------------------------------------------------------------------------
+                                             10.925128   slack (MET)
+
+
+
+
+===========================================================================
+report_checks --slack_max -0.01
+============================================================================
+======================= min_tt_025C_1v80 Corner ===================================
+
+No paths found.
+
+
+===========================================================================
+ report_check_types -max_slew -max_cap -max_fanout -violators
+============================================================================
+======================= min_tt_025C_1v80 Corner ===================================
+
+max fanout
+
+Pin                                   Limit Fanout  Slack
+---------------------------------------------------------
+clkbuf_1_0__f_CLK/X                       6     15     -9 (VIOLATED)
+clkbuf_1_1__f_CLK/X                       6     11     -5 (VIOLATED)
+
+
+
+===========================================================================
+report_parasitic_annotation -report_unannotated
+============================================================================
+Found 20 unannotated drivers.
+ _316__41/HI
+ _317__42/HI
+ _318__43/HI
+ _319__44/HI
+ _320__45/HI
+ _321__46/HI
+ _322__47/HI
+ _323__48/HI
+ _324__49/HI
+ _325__50/HI
+ _326__51/HI
+ _327__52/HI
+ _328__53/HI
+ _329__54/HI
+ _330__55/HI
+ _331__56/HI
+ _332__57/HI
+ _333__58/HI
+ _334__59/HI
+ _335__60/HI
+Found 0 partially unannotated drivers.
+
+===========================================================================
+max slew violation count 0
+max fanout violation count 2
+max cap violation count 0
+============================================================================
+
+===========================================================================
+check_setup -verbose -unconstrained_endpoints -multiple_clock -no_clock -no_input_delay -loops -generated_clocks
+===========================================================================
+Warning: There are 20 unconstrained endpoints.
+  get_fp32[0]
+  get_fp32[10]
+  get_fp32[11]
+  get_fp32[12]
+  get_fp32[13]
+  get_fp32[14]
+  get_fp32[15]
+  get_fp32[16]
+  get_fp32[17]
+  get_fp32[18]
+  get_fp32[19]
+  get_fp32[1]
+  get_fp32[2]
+  get_fp32[3]
+  get_fp32[4]
+  get_fp32[5]
+  get_fp32[6]
+  get_fp32[7]
+  get_fp32[8]
+  get_fp32[9]
